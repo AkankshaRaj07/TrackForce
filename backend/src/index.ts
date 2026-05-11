@@ -3,22 +3,32 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { PrismaClient } from './generated/client';
+import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient(); // Initialized Prisma Client
+const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
 // Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '50mb' }));
+app.use(morgan('combined'));
 
 // Auth Middleware
 const authenticateToken = (req: any, res: any, next: NextFunction) => {

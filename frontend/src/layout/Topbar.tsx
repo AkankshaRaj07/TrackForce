@@ -25,7 +25,10 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -36,6 +39,9 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowSettingsDropdown(false);
+      }
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setShowLangDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -70,42 +76,33 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
       <div className="topbar-spacer"></div>
 
       <div className="topbar-actions">
-        <button className="action-btn">
-          <Bell size={20} />
-          <span className="notification-dot"></span>
+        <button className="action-btn" onClick={toggleTheme} title="Toggle Appearance">
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        {/* Settings Dropdown */}
-        <div className="settings-dropdown-wrapper" ref={dropdownRef}>
+        <div className="lang-dropdown-wrapper" ref={langRef}>
           <button 
-            className={`action-btn settings-btn ${showSettingsDropdown ? 'active' : ''}`} 
-            onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+            className={`action-btn ${showLangDropdown ? 'active' : ''}`} 
+            onClick={() => setShowLangDropdown(!showLangDropdown)}
+            title="Change Language"
           >
-            <SettingsIcon size={20} />
-            <ChevronDown size={14} className={showSettingsDropdown ? 'rotate' : ''} />
+            <Globe size={20} />
           </button>
 
-          {showSettingsDropdown && (
-            <div className="premium-dropdown">
-              <div className="dropdown-header">System Settings</div>
-              <button className="dropdown-item" onClick={() => navigateToSection('profile')}>
-                <User size={16} /> <span>Profile Settings</span>
+          {showLangDropdown && (
+            <div className="premium-dropdown lang-dropdown">
+              <button 
+                className={`dropdown-item ${i18n.language === 'en' ? 'active' : ''}`} 
+                onChange={() => i18n.changeLanguage('en')}
+                onClick={() => { i18n.changeLanguage('en'); setShowLangDropdown(false); }}
+              >
+                <span>English (UK)</span>
               </button>
-              <button className="dropdown-item" onClick={() => navigateToSection('notifications')}>
-                <Bell size={16} /> <span>Notifications</span>
-              </button>
-              <button className="dropdown-item" onClick={() => navigateToSection('security')}>
-                <Shield size={16} /> <span>Security & Privacy</span>
-              </button>
-              <button className="dropdown-item" onClick={() => navigateToSection('data')}>
-                <Database size={16} /> <span>Data Management</span>
-              </button>
-              <button className="dropdown-item" onClick={() => navigateToSection('appearance')}>
-                <Globe size={16} /> <span>Site Configuration</span>
-              </button>
-              <div className="dropdown-divider"></div>
-              <button className="dropdown-item logout" onClick={handleLogout}>
-                <LogOut size={16} /> <span>Logout Session</span>
+              <button 
+                className={`dropdown-item ${i18n.language === 'vi' ? 'active' : ''}`} 
+                onClick={() => { i18n.changeLanguage('vi'); setShowLangDropdown(false); }}
+              >
+                <span>Vietnamese (VN)</span>
               </button>
             </div>
           )}

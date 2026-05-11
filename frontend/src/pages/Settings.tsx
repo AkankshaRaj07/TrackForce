@@ -16,6 +16,7 @@ import {
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { fetchConfig, updateConfig as syncConfig, updateEmployee } from '../api/api';
 import Toast from '../components/Toast';
 import type { ToastType } from '../components/Toast';
@@ -23,6 +24,7 @@ import './Settings.css';
 
 const Settings = () => {
   const { user, updateUser } = useAuth();
+  const { t, i18n } = useTranslation();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const avatar = user?.avatar || null;
   const [loading, setLoading] = useState(true);
@@ -119,20 +121,19 @@ const Settings = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            System Parameters
+            {t('systemParameters')}
           </motion.h1>
-          <p>Configure global security protocols and personalization nodes.</p>
+          <p>{t('systemParametersSubtext')}</p>
         </div>
         <button className="btn btn-primary" onClick={handleSave}>
-          <Save size={18} /> Save Configurations
+          <Save size={18} /> {t('saveConfigurations')}
         </button>
       </header>
 
       <div className="settings-grid">
-        {/* Profile Card */}
         <div className="settings-column">
           <section className="glass-card profile-settings">
-            <h3>Identity Node</h3>
+            <h3>{t('identityNode')}</h3>
             <div className="avatar-edit">
               <div className="avatar-preview">
                 {avatar ? <img src={avatar} alt="User" /> : <User size={40} />}
@@ -150,7 +151,7 @@ const Settings = () => {
               <div className="user-details">
                 <h4>{user?.firstName} {user?.lastName}</h4>
                 <p>{user?.email}</p>
-                <span className="badge badge-admin">{user?.role}</span>
+                <span className="badge badge-admin">{user?.role === 'ADMIN' ? t('admin') : user?.role}</span>
               </div>
             </div>
             
@@ -158,17 +159,21 @@ const Settings = () => {
               <div className="settings-item">
                 <div className="item-info">
                   <Globe size={18} />
-                  <span>Language Node</span>
+                  <span>{t('languageNode')}</span>
                 </div>
-                <select className="premium-select">
-                  <option>English (UK)</option>
-                  <option>Hindi (IN)</option>
+                <select 
+                  className="premium-select"
+                  value={i18n.language}
+                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                >
+                  <option value="en">English (UK)</option>
+                  <option value="vi">Vietnamese (VN)</option>
                 </select>
               </div>
               <div className="settings-item">
                 <div className="item-info">
                   {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-                  <span>Appearance Mode</span>
+                  <span>{t('appearanceMode')}</span>
                 </div>
                 <button 
                   className={`toggle-switch ${theme === 'dark' ? 'active' : ''}`}
@@ -180,10 +185,10 @@ const Settings = () => {
               <div className="settings-item">
                 <div className="item-info">
                   <Shield size={18} color={user?.isBiometricEnrolled ? "var(--success)" : "var(--text-tertiary)"} />
-                  <span>Biometric Status</span>
+                  <span>{t('biometricStatus')}</span>
                 </div>
                 <span className={`badge ${user?.isBiometricEnrolled ? 'badge-admin' : 'badge-warning'}`} style={user?.isBiometricEnrolled ? { borderColor: 'var(--success)', color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)' } : {}}>
-                  {user?.isBiometricEnrolled ? 'Verified' : 'Not Enrolled'}
+                  {user?.isBiometricEnrolled ? t('verified') : t('notEnrolled')}
                 </span>
               </div>
             </div>
@@ -192,15 +197,15 @@ const Settings = () => {
           <section className="glass-card security-nodes">
             <div className="section-title-with-icon">
               <Shield size={20} color="var(--primary)" />
-              <h3>Security Protocols</h3>
+              <h3>{t('securityProtocols')}</h3>
             </div>
             <div className="settings-list">
               <div className="settings-item">
                 <div className="item-info">
                   <MapPin size={18} />
                   <div>
-                    <span>Strict Geofencing</span>
-                    <p>Prevent clock-in outside 300m radius</p>
+                    <span>{t('strictGeofencing')}</span>
+                    <p>{t('strictGeofencingSubtext')}</p>
                   </div>
                 </div>
                 <button 
@@ -214,8 +219,8 @@ const Settings = () => {
                 <div className="item-info">
                   <Lock size={18} />
                   <div>
-                    <span>AI Biometric Enforcement</span>
-                    <p>Mandatory facial match for every clock event</p>
+                    <span>{t('biometricEnforcement')}</span>
+                    <p>{t('biometricEnforcementSubtext')}</p>
                   </div>
                 </div>
                 <button 
@@ -229,17 +234,16 @@ const Settings = () => {
           </section>
         </div>
 
-        {/* System & Notifications */}
         <div className="settings-column">
           <section className="glass-card notification-nodes">
             <div className="section-title-with-icon">
               <Bell size={20} color="var(--primary)" />
-              <h3>Intelligence Feed</h3>
+              <h3>{t('intelligenceFeed')}</h3>
             </div>
             <div className="settings-list">
               <div className="settings-item">
                 <div className="item-info">
-                  <span>Push Notifications</span>
+                  <span>{t('pushNotifications')}</span>
                 </div>
                 <button 
                   className={`toggle-switch ${notifications ? 'active' : ''}`}
@@ -250,7 +254,7 @@ const Settings = () => {
               </div>
               <div className="settings-item">
                 <div className="item-info">
-                  <span>Security Alerts</span>
+                  <span>{t('securityAlerts')}</span>
                 </div>
                 <button className="toggle-switch active">
                   <div className="switch-knob"></div>
@@ -262,32 +266,32 @@ const Settings = () => {
           <section className="glass-card system-health">
             <div className="section-title-with-icon">
               <Database size={20} color="var(--primary)" />
-              <h3>Infrastructure Node</h3>
+              <h3>{t('infrastructureNode')}</h3>
             </div>
             <div className="health-stats">
               <div className="health-item">
                 <div className="h-label">
-                  <span>Database Synchronization</span>
-                  <span className="status-text online">Syncing</span>
+                  <span>{t('dbSync')}</span>
+                  <span className="status-text online">{t('syncing')}</span>
                 </div>
                 <div className="h-bar"><div className="h-fill" style={{ width: '92%' }}></div></div>
               </div>
               <div className="health-item">
                 <div className="h-label">
-                  <span>API Latency</span>
+                  <span>{t('apiLatency')}</span>
                   <span className="status-text online">24ms</span>
                 </div>
                 <div className="h-bar"><div className="h-fill" style={{ width: '98%' }}></div></div>
               </div>
             </div>
             <button className="btn btn-ghost btn-block" style={{ marginTop: '20px' }}>
-              <RefreshCw size={18} /> Clear Persistence Cache
+              <RefreshCw size={18} /> {t('clearCache')}
             </button>
           </section>
 
           <div className="version-info">
             <Sparkles size={14} />
-            <span>TrackForce Enterprise v2.4.0 (Obsidian Gold)</span>
+            <span>TrackForce Enterprise v2.4.0 (Eco-Executive)</span>
           </div>
         </div>
       </div>
