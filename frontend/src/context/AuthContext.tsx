@@ -14,6 +14,7 @@ interface User {
   };
   avatar?: string;
   designation?: string;
+  jobTitle?: string;
   siteId?: string;
   isBiometricEnrolled?: boolean;
 }
@@ -23,6 +24,7 @@ interface AuthContextType {
   token: string | null;
   login: (userData: User, token: string) => void;
   logout: () => void;
+  updateUser: (userData: User) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
 }
@@ -60,13 +62,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('tf_user');
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('tf_user', JSON.stringify(userData));
+  };
+
   const isAuthenticated = !!token;
   const isAdmin = user?.role === 'ADMIN';
 
   if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated, isAdmin }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

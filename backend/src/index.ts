@@ -46,6 +46,13 @@ const requireAdmin = (req: any, res: any, next: NextFunction) => {
   next();
 };
 
+const requireManagement = (req: any, res: any, next: NextFunction) => {
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'MANAGER') {
+    return res.status(403).json({ error: 'Forbidden. Management access required.' });
+  }
+  next();
+};
+
 // Helper: Haversine formula to calculate distance between two points in meters
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // Earth radius in meters
@@ -127,8 +134,24 @@ app.post('/api/employees', authenticateToken, requireAdmin, async (req: Request,
   }
 });
 
-// Update employee (Admin only)
-app.put('/api/employees/:id', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+// Get single employee
+app.get('/api/employees/:id', authenticateToken, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const employee = await prisma.employee.findUnique({
+      where: { id },
+      include: { site: true }
+    });
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    const { password: _, ...userWithoutPassword } = employee;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch employee intelligence' });
+  }
+});
+
+// Update employee (Management only)
+app.put('/api/employees/:id', authenticateToken, requireManagement, async (req: Request, res: Response) => {
   const { id } = req.params;
   const data = req.body;
 
@@ -196,7 +219,8 @@ app.get('/api/sites', authenticateToken, async (req, res) => {
 });
 
 // Create new site (Admin only)
-app.post('/api/sites', authenticateToken, requireAdmin, async (req, res) => {
+// Add new site (Management)
+app.post('/api/sites', authenticateToken, requireManagement, async (req, res) => {
   const { name, location, managerName, latitude, longitude } = req.body;
   try {
     const site = await prisma.site.create({
@@ -235,6 +259,41 @@ app.put('/api/sites/:id/coordinates', authenticateToken, async (req: any, res: R
   }
 });
 
+// Update site details (Management)
+app.put('/api/sites/:id', authenticateToken, requireManagement, async (req: any, res: Response) => {
+  const { id } = req.params;
+  const { name, location, managerName } = req.body;
+
+  try {
+    const site = await prisma.site.update({
+      where: { id },
+      data: { name, location, managerName }
+    });
+    res.json(site);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update hub' });
+  }
+});
+
+// Decommission site (Management)
+app.delete('/api/sites/:id', authenticateToken, requireManagement, async (req: any, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    // First, unassign employees from this site
+    await prisma.employee.updateMany({
+      where: { siteId: id },
+      data: { siteId: null }
+    });
+
+    await prisma.site.delete({ where: { id } });
+    res.json({ message: 'Hub decommissioned successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to decommission hub. Ensure all dependencies are cleared.' });
+  }
+});
+
 // Health check route
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'TrackForce Backend is running' });
@@ -253,8 +312,65 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
 });
 
 // Get Dashboard Stats
-app.get('/api/stats', authenticateToken, async (req, res) => {
+app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
   try {
+    // Fetch the latest user state from DB to avoid stale role in token
+    const dbUser = await prisma.employee.findUnique({
+      where: { id: req.user.id }
+    });
+
+    if (!dbUser) return res.status(404).json({ error: 'User not found' });
+
+    const isManagement = dbUser.role === 'ADMIN' || dbUser.role === 'MANAGER';
+    
+    if (!isManagement) {
+      // Personal stats for Employee
+      const employeeId = req.user.id;
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - 7);
+
+      const logs = await prisma.attendance.findMany({
+        where: { employeeId, clockIn: { gte: weekStart } }
+      });
+
+      let totalMinutes = 0;
+      logs.forEach(log => {
+        if (log.clockIn && log.clockOut) {
+          totalMinutes += (log.clockOut.getTime() - log.clockIn.getTime()) / (1000 * 60);
+        }
+      });
+
+      const weeklyHours = (totalMinutes / 60).toFixed(1);
+      const earnings = (totalMinutes / 60 * 25).toFixed(2); // Using default rate of $25
+
+      // Calculate simple efficiency based on shift consistency (mocked for now but based on logs)
+      const efficiency = logs.length > 0 ? (90 + (logs.length * 2)).toString() : "0";
+
+      // Real daily trend for the employee
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const weeklyTrend = days.map(day => {
+        const count = logs.filter(l => days[new Date(l.date).getDay()] === day).length;
+        return { name: day, attendance: count > 0 ? 8 : 0 }; // 8 hours if they worked that day
+      });
+
+      const recentLogs = logs.slice(0, 5).map(log => ({
+        type: 'LOG',
+        title: 'Shift Started',
+        message: `You clocked in at ${new Date(log.clockIn).toLocaleTimeString()}`,
+        time: log.clockIn
+      }));
+
+      return res.json({
+        weeklyHours,
+        earnings,
+        efficiency,
+        weeklyTrend,
+        recentLogs,
+        activeSite: req.user.site?.name || 'Assigned Site'
+      });
+    }
+
+    // Global stats for Management
     const totalEmployees = await prisma.employee.count();
     const activeAttendance = await prisma.attendance.count({
       where: { clockOut: null }
@@ -262,7 +378,6 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     const totalSites = await prisma.site.count();
     const recentAlerts = await prisma.securityAlert.count();
 
-    // Calculate Average Shift Duration
     const completedShifts = await prisma.attendance.findMany({
       where: { clockOut: { not: null } },
       take: 50
@@ -276,24 +391,37 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     });
     const avgHours = completedShifts.length > 0 ? (totalMs / completedShifts.length / (1000 * 60 * 60)).toFixed(1) : "0";
 
-    // Site-wise Performance
     const sitePerformance = await prisma.site.findMany({
-      include: {
-        _count: {
-          select: { employees: true }
-        }
-      },
+      include: { _count: { select: { employees: true } } },
       take: 5
     });
 
-    // Fetch Recent System Events
     const alerts = await prisma.securityAlert.findMany({ take: 3, orderBy: { timestamp: 'desc' } });
     const attendance = await prisma.attendance.findMany({ take: 3, orderBy: { clockIn: 'desc' }, include: { employee: true } });
 
     const recentLogs = [
       ...alerts.map(a => ({ type: 'ALERT', title: 'Security Breach', message: a.message, time: a.timestamp })),
-      ...attendance.map(att => ({ type: 'LOG', title: 'Shift Started', message: `${att.employee.name} clocked in`, time: att.clockIn }))
-    ].sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 5);
+      ...attendance.map(att => ({ type: 'LOG', title: 'Shift Started', message: `${att.employee.firstName} ${att.employee.lastName} clocked in`, time: att.clockIn }))
+    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
+
+    // Calculate real daily global trend
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d;
+    });
+
+    const weeklyTrend = await Promise.all(last7Days.map(async (date) => {
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const count = await prisma.attendance.count({
+        where: { clockIn: { gte: date, lt: nextDay } }
+      });
+      return {
+        name: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+        attendance: count
+      };
+    }));
 
     res.json({
       totalEmployees,
@@ -302,21 +430,8 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       violations: recentAlerts,
       avgShift: avgHours,
       recentLogs,
-      sitePerformance: sitePerformance.map(s => ({
-        name: s.name,
-        count: s._count.employees
-      })),
-      // Mocking trend for now as real trend requires complex date grouping, 
-      // but making it dynamic based on count
-      weeklyTrend: [
-        { name: 'Mon', attendance: Math.floor(Math.random() * 50) + activeAttendance },
-        { name: 'Tue', attendance: Math.floor(Math.random() * 50) + activeAttendance },
-        { name: 'Wed', attendance: Math.floor(Math.random() * 50) + activeAttendance },
-        { name: 'Thu', attendance: Math.floor(Math.random() * 50) + activeAttendance },
-        { name: 'Fri', attendance: Math.floor(Math.random() * 50) + activeAttendance },
-        { name: 'Sat', attendance: 0 },
-        { name: 'Sun', attendance: 0 }
-      ]
+      sitePerformance: sitePerformance.map(s => ({ name: s.name, count: s._count.employees })),
+      weeklyTrend
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch dashboard intelligence' });
@@ -383,8 +498,9 @@ app.post('/api/attendance/clock-in/:employeeId', authenticateToken, async (req, 
     // Calculate distance
     const distance = getDistance(latitude, longitude, siteLat, siteLong);
     const ALLOWED_RADIUS = 300; // 300 meters
+    const isManagement = (req as any).user?.role === 'ADMIN' || (req as any).user?.role === 'MANAGER';
 
-    if (distance > ALLOWED_RADIUS) {
+    if (distance > ALLOWED_RADIUS && !isManagement) {
       // Log Security Violation
       await prisma.securityAlert.create({
         data: {
@@ -417,6 +533,29 @@ app.post('/api/attendance/clock-in/:employeeId', authenticateToken, async (req, 
   } catch (error: any) {
     console.error('BACKEND_ERROR [ClockIn]:', error);
     res.status(500).json({ error: 'Failed to clock in' });
+  }
+});
+
+// Manual Attendance Log (Management only)
+app.post('/api/attendance/manual', authenticateToken, requireManagement, async (req, res) => {
+  const { employeeId, siteId, clockIn, clockOut, date, status } = req.body;
+
+  try {
+    const attendance = await prisma.attendance.create({
+      data: {
+        employeeId,
+        siteId,
+        clockIn: new Date(clockIn),
+        clockOut: clockOut ? new Date(clockOut) : null,
+        date: new Date(date),
+        status: status || 'PRESENT',
+        biometricProof: 'MANUAL_ENTRY_BY_ADMIN'
+      }
+    });
+    res.status(201).json(attendance);
+  } catch (error: any) {
+    console.error('BACKEND_ERROR [ManualAttendance]:', error);
+    res.status(500).json({ error: 'Failed to log manual attendance' });
   }
 });
 
@@ -521,14 +660,13 @@ app.post('/api/attendance/break-end/:employeeId', authenticateToken, async (req,
   }
 });
 
-// Get Payroll Data (Admin and Manager only)
+// Get Payroll Data
 app.get('/api/payroll', authenticateToken, async (req: any, res: Response) => {
-  if (req.user.role !== 'ADMIN' && req.user.role !== 'MANAGER') {
-    return res.status(403).json({ error: 'Forbidden. Management access required.' });
-  }
+  const isManagement = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
 
   try {
     const employees = await prisma.employee.findMany({
+      where: isManagement ? {} : { id: req.user.id },
       include: {
         attendance: {
           where: {
@@ -563,11 +701,12 @@ app.get('/api/payroll', authenticateToken, async (req: any, res: Response) => {
 
       return {
         id: emp.id,
-        employeeId: emp.employeeId,
-        name: `${emp.firstName} ${emp.lastName}`,
-        designation: emp.designation,
-        totalHours: parseFloat(totalHours.toFixed(2)),
-        overtimeHours: parseFloat(overtimeHours.toFixed(2)),
+        employee: {
+          firstName: emp.firstName,
+          lastName: emp.lastName,
+          employeeId: emp.employeeId
+        },
+        totalHours: totalHours.toFixed(1),
         earnings: parseFloat(earnings.toFixed(2)),
         status: 'PENDING'
       };
@@ -626,6 +765,25 @@ app.patch('/api/attendance/:id', authenticateToken, async (req: any, res: Respon
   }
 });
 
+// Delete Attendance Log (Admin only)
+app.delete('/api/attendance/:id', authenticateToken, requireAdmin, async (req: any, res: Response) => {
+  const { id } = req.params;
+  try {
+    // First, delete any breaks associated with this attendance
+    await prisma.break.deleteMany({
+      where: { attendanceId: id }
+    });
+
+    await prisma.attendance.delete({
+      where: { id }
+    });
+    res.json({ message: 'Log purged successfully' });
+  } catch (error) {
+    console.error('PURGE_ERROR:', error);
+    res.status(500).json({ error: 'Failed to purge attendance log. Ensure no active dependencies exist.' });
+  }
+});
+
 // Process Payroll (Update status to PAID)
 app.post('/api/payroll/process', authenticateToken, async (req: any, res: Response) => {
   if (req.user.role !== 'ADMIN' && req.user.role !== 'MANAGER') {
@@ -645,17 +803,21 @@ app.post('/api/payroll/process', authenticateToken, async (req: any, res: Respon
 });
 
 // --- Security Alerts ---
-app.post('/api/security/alerts', authenticateToken, async (req: Request, res: Response) => {
-  const { type, message, severity, employeeId, siteId } = req.body;
+app.put('/api/sites/:id/coordinates', authenticateToken, async (req: any, res: Response) => {
+  const { id } = req.params;
+  const { latitude, longitude } = req.body;
+
   try {
-    const alert = await prisma.securityAlert.create({
-      data: { type, message, severity, employeeId, siteId }
+    const site = await prisma.site.update({
+      where: { id },
+      data: { latitude, longitude }
     });
-    res.status(201).json(alert);
+    res.json(site);
   } catch (error) {
-    res.status(400).json({ error: 'Failed to log security alert' });
+    res.status(500).json({ error: 'Failed to update coordinates' });
   }
 });
+
 
 // --- System Configuration (Hardening) ---
 let systemConfig = {
@@ -677,10 +839,14 @@ app.post('/api/config', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // --- Enhanced Payroll Analytics ---
-app.get('/api/payroll/stats', authenticateToken, requireAdmin, async (req, res) => {
+app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response) => {
   try {
+    const isManagement = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
     const logs = await prisma.attendance.findMany({
-      where: { clockOut: { not: null } }
+      where: { 
+        clockOut: { not: null },
+        ...(isManagement ? {} : { employeeId: req.user.id })
+      }
     });
 
     let totalCost = 0;
@@ -706,8 +872,9 @@ app.get('/api/payroll/stats', authenticateToken, requireAdmin, async (req, res) 
       totalPayout: parseFloat(totalCost.toFixed(2)),
       totalHours: parseFloat(totalHours.toFixed(2)),
       overtimeHours: parseFloat(overtimeHours.toFixed(2)),
-      activeEmployees: logs.length,
-      trend: [65, 59, 80, 81, 56, 55, 40] 
+      activeRecipients: isManagement ? logs.length : 1,
+      currency: 'USD',
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to compute payroll analytics' });
@@ -723,6 +890,18 @@ app.get('/api/security/alerts', authenticateToken, async (req: any, res: Respons
     res.json(alerts);
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to fetch security alerts' });
+  }
+});
+
+app.post('/api/security/alerts', authenticateToken, async (req: any, res: Response) => {
+  const { type, message, severity, employeeId, siteId } = req.body;
+  try {
+    const alert = await prisma.securityAlert.create({
+      data: { type, message, severity, employeeId, siteId }
+    });
+    res.status(201).json(alert);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to log security alert' });
   }
 });
 

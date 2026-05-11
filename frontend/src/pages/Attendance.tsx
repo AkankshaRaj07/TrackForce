@@ -13,24 +13,27 @@ import {
   CheckCircle2,
   Camera,
   MapPin,
-  Shield
+  Shield,
+  Search,
+  Trash2,
+  UserPlus
 } from 'lucide-react';
-import { clockIn, fetchTodayLogs, fetchAllLogs, updateAttendanceStatus, clockOut, startBreak, endBreak, enrollBiometric, createSecurityAlert } from '../api/api';
+import { clockIn, deleteAttendance, fetchTodayLogs, fetchAllLogs, updateAttendanceStatus, clockOut, startBreak, endBreak, enrollBiometric, createSecurityAlert, fetchEmployees, fetchSites, logManualAttendance } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
+import Toast from '../components/Toast';
+import type { ToastType } from '../components/Toast';
 
 import './Attendance.css';
 
-
 const Attendance = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { t } = useTranslation();
   const isAdmin = user?.role === 'ADMIN';
   const isManager = user?.role === 'MANAGER';
   const isManagement = isAdmin || isManager;
 
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
-
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
   const [showScanner, setShowScanner] = useState(false);
@@ -42,14 +45,37 @@ const Attendance = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [allLogs, setAllLogs] = useState<any[]>([]);
   const [isOnBreak, setIsOnBreak] = useState(false);
+  const [toasts, setToasts] = useState<any[]>([]);
+  const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
+  const [logToPurge, setLogToPurge] = useState<string | null>(null);
   const isClockedIn = logs.length > 0 && !logs[0].clockOut;
+
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+  const [showManualLog, setShowManualLog] = useState(false);
+  const [manualData, setManualData] = useState({
+    employeeId: '',
+    siteId: '',
+    date: new Date().toISOString().split('T')[0],
+    clockIn: '09:00',
+    clockOut: '17:00',
+    status: 'PRESENT'
+  });
+
+  const addToast = (message: string, type: ToastType = 'info') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   useEffect(() => {
     const loadModels = async () => {
       try {
         const MODEL_URL = '/models';
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
           faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
@@ -57,6 +83,7 @@ const Attendance = () => {
         setModelsLoaded(true);
       } catch (err) {
         console.error("Error loading models:", err);
+        addToast("AI initialization failed. Please refresh the page.", 'error');
       }
     };
     loadModels();
@@ -79,8 +106,7 @@ const Attendance = () => {
       }
       streamRef.current = stream;
     } catch (err) {
-      console.error("Error accessing camera:", err);
-      // alert("Could not access camera. Please check permissions.");
+      addToast("Could not access camera. Please check permissions.", 'error');
     }
   };
 
@@ -92,16 +118,63 @@ const Attendance = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchTodayLogs(user.id).then(setLogs).catch(console.error);
-      if (isManagement) {
-        fetchAllLogs().then(setAllLogs).catch(console.error);
-      }
+    if (isManagement) {
+      loadManagementData();
     }
+  }, [isManagement]);
+
+  const loadManagementData = async () => {
+    try {
+      const [empList, siteList] = await Promise.all([
+        fetchEmployees(),
+        fetchSites()
+      ]);
+      setEmployees(empList);
+      setSites(siteList);
+    } catch (err) {
+      addToast("Failed to load workforce intelligence", 'error');
+    }
+  };
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const fullIn = `${manualData.date}T${manualData.clockIn}:00`;
+      const fullOut = manualData.clockOut ? `${manualData.date}T${manualData.clockOut}:00` : null;
+      
+      await logManualAttendance({
+        ...manualData,
+        clockIn: fullIn,
+        clockOut: fullOut
+      });
+      
+      addToast("Attendance logged successfully!", 'success');
+      setShowManualLog(false);
+      loadData(); // Refresh logs
+    } catch (err: any) {
+      addToast(err.message, 'error');
+    }
+  };
+
+  const loadData = async () => {
+    if (!user) return;
+    try {
+      const [today, all] = await Promise.all([
+        fetchTodayLogs(user.id),
+        isAdmin || isManager ? fetchAllLogs() : Promise.resolve([])
+      ]);
+      setLogs(today);
+      if (isAdmin || isManager) setAllLogs(all);
+    } catch (err) {
+      console.error("Data load error:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, [user, isManagement]);
 
   useEffect(() => {
-    // Check if user is on break from the latest log
     if (isClockedIn && logs[0].breaks) {
       const activeBreak = logs[0].breaks.find((b: any) => !b.endTime);
       setIsOnBreak(!!activeBreak);
@@ -112,19 +185,21 @@ const Attendance = () => {
     try {
       await updateAttendanceStatus(id, status);
       setAllLogs(allLogs.map(l => l.id === id ? { ...l, status } : l));
+      addToast(`Log ${status.toLowerCase()} successfully`, 'success');
     } catch (err) {
-      alert('Failed to update status');
+      addToast('Failed to update status', 'error');
     }
   };
 
   const handleExport = () => {
     exportToCSV(allLogs, 'Attendance_Report');
   };
+
   const handleClockOut = async () => {
     if (!user) return;
     
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      addToast("Geolocation is not supported by your browser", 'error');
       return;
     }
 
@@ -133,16 +208,15 @@ const Attendance = () => {
         const { latitude, longitude } = position.coords;
         try {
           await clockOut(user.id, latitude, longitude);
-          alert("Clocked out successfully! Final location logged.");
-          const updatedLogs = await fetchTodayLogs(user.id);
-          setLogs(updatedLogs);
+          addToast("Clocked out successfully! Final location logged.", 'success');
+          loadData();
           setShowScanner(false);
         } catch (err: any) {
-          alert(err.message);
+          addToast(err.message, 'error');
         }
       },
-      (error) => {
-        alert("Please enable location access to clock out.");
+      () => {
+        addToast("Please enable location access to clock out.", 'warning');
       },
       { enableHighAccuracy: true }
     );
@@ -153,15 +227,15 @@ const Attendance = () => {
     try {
       if (isOnBreak) {
         await endBreak(user.id);
-        alert("Break ended!");
+        addToast("Break ended!", 'success');
       } else {
         await startBreak(user.id);
-        alert("Break started!");
+        addToast("Break started!", 'info');
       }
       const updatedLogs = await fetchTodayLogs(user.id);
       setLogs(updatedLogs);
     } catch (err: any) {
-      alert(err.message);
+      addToast(err.message, 'error');
     }
   };
 
@@ -173,12 +247,12 @@ const Attendance = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.6); // 60% quality to save space
+    return canvas.toDataURL('image/jpeg', 0.6);
   };
 
   const handleEnrollment = async () => {
     if (!user || !user.avatar) {
-      alert("Reference photo not found. Please contact Admin.");
+      addToast("Reference photo not found. Please contact Admin.", 'error');
       return;
     }
     
@@ -187,40 +261,48 @@ const Attendance = () => {
 
     try {
       const biometricProof = captureFrame();
-      if (!biometricProof) throw new Error("Capture failed");
+      if (!biometricProof) throw new Error("Capture failed - check camera visibility");
 
-      // Load reference (Admin Photo) and capture
       const referenceImg = await faceapi.fetchImage(user.avatar);
       const capturedImg = await faceapi.fetchImage(biometricProof);
 
-      const refDetection = await faceapi.detectSingleFace(referenceImg).withFaceLandmarks().withFaceDescriptor();
-      const capDetection = await faceapi.detectSingleFace(capturedImg).withFaceLandmarks().withFaceDescriptor();
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("AI Detection Timed Out - Please check lighting")), 15000)
+      );
+
+      const detectionsPromise = (async () => {
+        const ref = await faceapi.detectSingleFace(referenceImg).withFaceLandmarks().withFaceDescriptor();
+        const cap = await faceapi.detectSingleFace(capturedImg).withFaceLandmarks().withFaceDescriptor();
+        return { ref, cap };
+      })();
+
+      const { ref: refDetection, cap: capDetection } = await Promise.race([detectionsPromise, timeoutPromise]) as any;
 
       if (refDetection?.descriptor && capDetection?.descriptor) {
         const distance = faceapi.euclideanDistance(refDetection.descriptor, capDetection.descriptor);
         if (distance < 0.6) {
-          // Success! Mark as enrolled in DB
-          await enrollBiometric(user.id, Array.from(capDetection.descriptor));
+          const updatedUser = await enrollBiometric(user.id, Array.from(capDetection.descriptor));
+          updateUser(updatedUser);
           setScanStatus('success');
-          alert(t('enrollmentSuccess'));
-          window.location.reload(); // Refresh to update user context
+          addToast(t('enrollmentSuccess'), 'success');
+          setTimeout(() => window.location.reload(), 1500);
         } else {
-          // Log Security Incident
           await createSecurityAlert({
             type: 'BIOMETRIC_MISMATCH',
-            message: `Enrollment Failed: Biometric mismatch for ${user.firstName} ${user.lastName}. Possible identity spoofing.`,
+            message: `Enrollment Failed: Biometric mismatch for ${user.firstName} ${user.lastName}.`,
             severity: 'HIGH',
             employeeId: user.id
           });
-          alert(t('identityMismatch'));
+          addToast(t('identityMismatch'), 'error');
           setScanStatus('idle');
         }
       } else {
-        alert("Face not clearly detected. Try again in better lighting.");
+        addToast("Face not clearly detected. Ensure your face is centered and well-lit.", 'warning');
         setScanStatus('idle');
       }
     } catch (err: any) {
-      alert(err.message || "Enrollment failed");
+      addToast(err.message || "AI Engine busy - please retry", 'error');
       setScanStatus('idle');
     } finally {
       setIsScanning(false);
@@ -230,7 +312,6 @@ const Attendance = () => {
   const handleClockAction = async () => {
     if (!user) return;
     
-    // If user is not enrolled, they should be using handleEnrollment instead
     if (!user.isBiometricEnrolled) {
       handleEnrollment();
       return;
@@ -239,29 +320,37 @@ const Attendance = () => {
     setIsScanning(true);
     setScanStatus('scanning');
     
-    // 1. Capture the "Biometric Proof" snapshot
     const biometricProof = captureFrame();
     if (!biometricProof) {
-      alert("Failed to capture image");
+      addToast("Failed to capture image", 'error');
       setIsScanning(false);
       setScanStatus('idle');
       return;
     }
 
-    // --- AI FACIAL MATCHING LOGIC (Against Admin Photo) ---
     let isMatch = false;
     if (modelsLoaded && user?.avatar) {
       try {
         const referenceImg = await faceapi.fetchImage(user.avatar);
         const capturedImg = await faceapi.fetchImage(biometricProof);
 
-        const refDetection = await faceapi.detectSingleFace(referenceImg).withFaceLandmarks().withFaceDescriptor();
-        const capDetection = await faceapi.detectSingleFace(capturedImg).withFaceLandmarks().withFaceDescriptor();
+        // AI Timeout Guard
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("AI Verification Timed Out")), 15000)
+        );
+
+        const detectionsPromise = (async () => {
+          const ref = await faceapi.detectSingleFace(referenceImg).withFaceLandmarks().withFaceDescriptor();
+          const cap = await faceapi.detectSingleFace(capturedImg).withFaceLandmarks().withFaceDescriptor();
+          return { ref, cap };
+        })();
+
+        const result = await Promise.race([detectionsPromise, timeoutPromise]) as any;
+        const { ref: refDetection, cap: capDetection } = result;
 
         if (refDetection?.descriptor && capDetection?.descriptor) {
           const distance = faceapi.euclideanDistance(refDetection.descriptor, capDetection.descriptor);
           isMatch = distance < 0.6;
-          console.log(`Live Matching Distance: ${distance}`);
         }
       } catch (err) {
         console.error("Verification error:", err);
@@ -269,7 +358,6 @@ const Attendance = () => {
     }
 
     if (!isMatch) {
-      // Log Security Incident
       await createSecurityAlert({
         type: 'BIOMETRIC_MISMATCH',
         message: `Clock-in Failed: Biometric mismatch for ${user.firstName} ${user.lastName}.`,
@@ -277,15 +365,14 @@ const Attendance = () => {
         employeeId: user.id,
         siteId: user.siteId
       });
-      alert("Biometric mismatch! Identity could not be verified.");
+      addToast("Biometric mismatch! Identity could not be verified.", 'error');
       setScanStatus('idle');
       setIsScanning(false);
       return;
     }
 
-    // 2. Get Current Location
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      addToast("Geolocation is not supported by your browser", 'error');
       setScanStatus('idle');
       setIsScanning(false);
       return;
@@ -295,153 +382,413 @@ const Attendance = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          // 3. Attempt Clock In with Coordinates AND Biometric Proof
           await clockIn(user.id, latitude, longitude, biometricProof);
           setScanStatus('success');
+          addToast("Clock-in Successful. Welcome back!", 'success');
           const updatedLogs = await fetchTodayLogs(user.id);
           setLogs(updatedLogs);
-        } catch (err: any) {
-          alert(err.message);
-          setScanStatus('idle');
-        } finally {
           setTimeout(() => {
             setIsScanning(false);
             setScanStatus('idle');
-          }, 2000);
+            setShowScanner(false);
+          }, 1500);
+        } catch (err: any) {
+          addToast(err.message, 'error');
+          setScanStatus('idle');
+          setIsScanning(false);
         }
       },
-      (error) => {
-        alert("Please enable location access to clock in.");
+      (err) => {
+        const msg = err.code === 1 ? "Location permission denied." : "Location request timed out.";
+        addToast(msg, 'warning');
         setScanStatus('idle');
         setIsScanning(false);
       },
-      { enableHighAccuracy: true }
+      { 
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
     );
   };
+
+  const handleDirectClockIn = async () => {
+    if (!user) return;
+    
+    if (!navigator.geolocation) {
+      addToast("Geolocation is required for tracking", 'error');
+      return;
+    }
+
+    setIsScanning(true);
+    setScanStatus('scanning');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          await clockIn(user.id, latitude, longitude, user.avatar || '');
+          setScanStatus('success');
+          addToast("Management Override: Clock-in Successful.", 'success');
+          const updatedLogs = await fetchTodayLogs(user.id);
+          setLogs(updatedLogs);
+          setTimeout(() => {
+            setIsScanning(false);
+            setScanStatus('idle');
+          }, 1500);
+        } catch (err: any) {
+          addToast(err.message, 'error');
+          setScanStatus('idle');
+          setIsScanning(false);
+        }
+      },
+      (err) => {
+        const msg = err.code === 1 ? "Location permission denied." : "Location request timed out.";
+        addToast(msg, 'warning');
+        setScanStatus('idle');
+        setIsScanning(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleDeleteLog = async (id: string) => {
+    setLogToPurge(id);
+    setShowPurgeConfirm(true);
+  };
+
+  const confirmPurge = async () => {
+    if (!logToPurge) return;
+    try {
+      await deleteAttendance(logToPurge);
+      addToast('Log purged successfully', 'success');
+      setShowPurgeConfirm(false);
+      setLogToPurge(null);
+      loadData();
+    } catch (err) {
+      addToast('Failed to purge log', 'error');
+    }
+  };
+
+  const renderModals = () => (
+    <>
+      <AnimatePresence>
+        {showScanner && (
+          <div className="proof-modal-overlay">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-card scanner-modal-obsidian"
+            >
+              <div className="modal-header-premium">
+                <h3>{isEnrolling ? t('beginEnrollment') : t('secureVerification')}</h3>
+                <button className="close-btn-premium" onClick={() => setShowScanner(false)}><X size={20} /></button>
+              </div>
+
+              <div className="biometric-viewport-premium">
+                <div className={`scan-ring ${scanStatus}`}></div>
+                <div className="camera-sim">
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    muted 
+                    className="camera-video"
+                  />
+                  <div className="scanner-line"></div>
+                </div>
+              </div>
+
+              <div className="verification-info-premium">
+                <div className="v-item"><MapPin size={14} /> {user?.site?.name || 'Assigned Hub'}</div>
+                <div className="v-item"><Shield size={14} /> Biometric Secure</div>
+              </div>
+
+              <div className="modal-actions-premium">
+                <button 
+                  className={`btn btn-primary btn-block btn-lg ${isScanning || !modelsLoaded ? 'loading' : ''}`}
+                  onClick={isEnrolling ? handleEnrollment : handleClockAction}
+                  disabled={isScanning || !modelsLoaded}
+                >
+                  {!modelsLoaded ? "Initializing AI..." : (isScanning ? t('verifying') : (isEnrolling ? t('beginEnrollment') : t('clockIn')))}
+                </button>
+                <button className="btn btn-ghost btn-block" onClick={() => setShowScanner(false)}>
+                  {t('cancel')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showManualLog && (
+          <div className="proof-modal-overlay">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass-card scanner-modal-obsidian manual-log-modal"
+              style={{ maxWidth: '500px' }}
+            >
+              <div className="modal-header-premium">
+                <h3>Log Manual Attendance</h3>
+                <button className="close-btn-premium" onClick={() => setShowManualLog(false)}><X size={20} /></button>
+              </div>
+
+              <form onSubmit={handleManualSubmit} className="manual-log-form" style={{ padding: '20px' }}>
+                <div className="form-group-premium" style={{ marginBottom: '1.2rem' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Select Employee</label>
+                  <select 
+                    value={manualData.employeeId} 
+                    onChange={e => setManualData({...manualData, employeeId: e.target.value})}
+                    required
+                    style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
+                  >
+                    <option value="" style={{ background: 'var(--surface)' }}>Choose Employee...</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id} style={{ background: 'var(--surface)' }}>{emp.firstName} {emp.lastName} ({emp.email})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-premium" style={{ marginBottom: '1.2rem' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Operational Site Hub</label>
+                  <select 
+                    value={manualData.siteId} 
+                    onChange={e => setManualData({...manualData, siteId: e.target.value})}
+                    required
+                    style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
+                  >
+                    <option value="" style={{ background: 'var(--surface)' }}>Choose Hub...</option>
+                    {sites.map(s => (
+                      <option key={s.id} value={s.id} style={{ background: 'var(--surface)' }}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-row-premium" style={{ display: 'flex', gap: '15px', marginBottom: '1.2rem' }}>
+                  <div className="form-group-premium" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Record Date</label>
+                    <input 
+                      type="date" 
+                      value={manualData.date} 
+                      onChange={e => setManualData({...manualData, date: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
+                    />
+                  </div>
+                  <div className="form-group-premium" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Attendance Status</label>
+                    <select 
+                      value={manualData.status} 
+                      onChange={e => setManualData({...manualData, status: e.target.value})}
+                      style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
+                    >
+                      <option value="PRESENT" style={{ background: 'var(--surface)' }}>PRESENT</option>
+                      <option value="LATE" style={{ background: 'var(--surface)' }}>LATE</option>
+                      <option value="ABSENT" style={{ background: 'var(--surface)' }}>ABSENT</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row-premium" style={{ display: 'flex', gap: '15px', marginBottom: '1.5rem' }}>
+                  <div className="form-group-premium" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Clock-In (T1)</label>
+                    <input 
+                      type="time" 
+                      value={manualData.clockIn} 
+                      onChange={e => setManualData({...manualData, clockIn: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
+                    />
+                  </div>
+                  <div className="form-group-premium" style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Clock-Out (T2)</label>
+                    <input 
+                      type="time" 
+                      value={manualData.clockOut} 
+                      onChange={e => setManualData({...manualData, clockOut: e.target.value})}
+                      style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-actions-premium" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button type="submit" className="btn btn-primary btn-block btn-lg">
+                    Log Official Record
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-block" onClick={() => setShowManualLog(false)}>
+                    Discard
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedProof && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="proof-modal-overlay"
+            onClick={() => setSelectedProof(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-card scanner-modal-obsidian proof-card-special"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="modal-header-premium">
+                <h3>{t('biometricSnapshot')}</h3>
+                <button className="close-btn-premium" onClick={() => setSelectedProof(null)}><X size={20} /></button>
+              </div>
+              <div className="proof-content-obsidian">
+                <img src={selectedProof} alt="Biometric Proof" />
+                <div className="proof-meta-premium">
+                  <Shield size={16} />
+                  <span>AI-Verified Geometric Match</span>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPurgeConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="proof-modal-overlay"
+            onClick={() => setShowPurgeConfirm(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="glass-card scanner-modal-obsidian confirm-purge-modal"
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '400px' }}
+            >
+              <div className="modal-icon-header warning" style={{ textAlign: 'center', padding: '2rem 0', color: '#ef4444' }}>
+                <Trash2 size={64} />
+              </div>
+              <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>Confirm Data Purge</h3>
+              <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', marginBottom: '2rem', lineHeight: '1.6' }}>
+                Are you sure you want to permanently delete this attendance record? This action will also remove all associated break data and cannot be undone.
+              </p>
+              <div className="modal-actions-premium" style={{ flexDirection: 'column', gap: '0.5rem' }}>
+                <button className="btn btn-primary btn-block btn-lg" style={{ backgroundColor: '#ef4444' }} onClick={confirmPurge}>
+                  Purge Record Permanently
+                </button>
+                <button className="btn btn-ghost btn-block" onClick={() => setShowPurgeConfirm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 
   if (!isManagement) {
     return (
       <div className="enterprise-page user-view">
+        <div className="premium-toast-container">
+          <AnimatePresence>
+            {toasts.map((t) => (
+              <Toast key={t.id} {...t} onClose={removeToast} />
+            ))}
+          </AnimatePresence>
+        </div>
         
         <div className="user-attendance-grid">
-          {/* Biometric Section */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="glass-card scanner-card"
           >
-            {!showScanner ? (
-              <div className="verification-placeholder">
-                <div className="placeholder-icon">
-                  <Shield size={48} color={user?.isBiometricEnrolled ? 'var(--primary)' : 'var(--error)'} />
-                </div>
-                <h3>{user?.isBiometricEnrolled ? (isClockedIn ? t('status') + ': ' + t('active') : t('verificationRequired')) : t('enrollmentRequired')}</h3>
-                <p>
-                  {!user?.isBiometricEnrolled 
-                    ? t('enrollmentSubtext')
-                    : isClockedIn 
-                      ? `${t('clockedInAt')} ${new Date(logs[0].clockIn).toLocaleTimeString()}.`
-                      : t('verificationInstruction')}
-                </p>
-                
-                <div className="action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                  {!user?.isBiometricEnrolled ? (
+            <div className="verification-placeholder">
+              <div className="placeholder-icon">
+                <Shield size={48} color={user?.isBiometricEnrolled ? 'var(--primary)' : 'var(--error)'} />
+              </div>
+              <h3>{user?.isBiometricEnrolled ? (isClockedIn ? t('status') + ': ' + t('active') : t('verificationRequired')) : t('enrollmentRequired')}</h3>
+              <p>
+                {!user?.isBiometricEnrolled 
+                  ? t('enrollmentSubtext')
+                  : isClockedIn 
+                    ? `${t('clockedInAt')} ${new Date(logs[0].clockIn).toLocaleTimeString()}.`
+                    : t('verificationInstruction')}
+              </p>
+              
+              <div className="action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                {!user?.isBiometricEnrolled ? (
+                  <button 
+                    className="btn btn-primary btn-lg btn-block"
+                    onClick={() => {
+                      if (isManagement) {
+                        handleDirectClockIn();
+                      } else {
+                        setIsEnrolling(true);
+                        setShowScanner(true);
+                      }
+                    }}
+                  >
+                    {t('beginEnrollment')}
+                  </button>
+                ) : !isClockedIn ? (
                     <button 
                       className="btn btn-primary btn-lg btn-block"
                       onClick={() => {
-                        setIsEnrolling(true);
-                        setShowScanner(true);
-                      }}
-                    >
-                      {t('beginEnrollment')}
-                    </button>
-                  ) : !isClockedIn ? (
-                      <button 
-                        className="btn btn-primary btn-lg btn-block"
-                        onClick={() => {
+                        if (isManagement) {
+                          handleDirectClockIn();
+                        } else {
                           setIsEnrolling(false);
                           setShowScanner(true);
-                        }}
-                      >
-                        {t('startSecureVerification')}
-                      </button>
-                  ) : (
-                    <>
-                      <button 
-                        className={`btn ${isOnBreak ? 'btn-primary' : 'btn-outline'} btn-lg btn-block`}
-                        onClick={handleToggleBreak}
-                      >
-                        {isOnBreak ? 'End Break' : 'Start Break'}
-                      </button>
-                      <button 
-                        className="btn btn-danger btn-lg btn-block"
-                        onClick={handleClockOut}
-                        style={{ backgroundColor: '#ef4444', color: 'white', border: 'none' }}
-                      >
-                        {t('clockOut')}
-                      </button>
-                    </>
-                  )}
-                </div>
+                        }
+                      }}
+                    >
+                      {t('startSecureVerification')}
+                    </button>
+                ) : (
+                  <>
+                    <button 
+                      className={`btn ${isOnBreak ? 'btn-primary' : 'btn-outline'} btn-lg btn-block`}
+                      onClick={handleToggleBreak}
+                    >
+                      {isOnBreak ? 'End Break' : 'Start Break'}
+                    </button>
+                    <button 
+                      className="btn btn-danger btn-lg btn-block"
+                      onClick={handleClockOut}
+                      style={{ backgroundColor: '#ef4444', color: 'white', border: 'none' }}
+                    >
+                      {t('clockOut')}
+                    </button>
+                  </>
+                )}
               </div>
-            ) : (
-              <>
-                <div className="scanner-header">
-                  <h3>{isEnrolling ? t('beginEnrollment') : t('secureVerification')}</h3>
-                  <p>{isEnrolling ? t('matchingWithAdminPhoto') : t('positionFaceFrame')}</p>
-                </div>
-
-                <div className="biometric-viewport">
-                  <div className={`scan-ring ${scanStatus}`}></div>
-                  <div className="camera-sim">
-                    <video 
-                      ref={videoRef} 
-                      autoPlay 
-                      playsInline 
-                      muted 
-                      className="camera-video"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }}
-                    />
-                    <div className="scanner-line"></div>
-                    <AnimatePresence mode="wait">
-                      {scanStatus === 'scanning' ? (
-                        <motion.div key="scan" className="overlay"><Scan size={48} className="pulse" /></motion.div>
-                      ) : scanStatus === 'success' ? (
-                        <motion.div key="success" className="overlay success"><CheckCircle2 size={64} /></motion.div>
-                      ) : null}
-                    </AnimatePresence>
-                  </div>
-                </div>
-
-                <div className="verification-info">
-                  <div className="v-item"><MapPin size={14} /> {user?.site?.name || 'Assigned Hub'}</div>
-                  <div className="v-item"><Shield size={14} /> Biometric Secure</div>
-                </div>
-
-                <button 
-                  className={`btn btn-primary btn-block btn-lg ${isScanning ? 'loading' : ''}`}
-                  onClick={isEnrolling ? handleEnrollment : handleClockAction}
-                  disabled={isScanning}
-                >
-                  {isScanning ? t('verifying') : (isEnrolling ? t('beginEnrollment') : t('clockIn'))}
-                </button>
-                <button className="btn btn-ghost btn-block" onClick={() => setShowScanner(false)}>
-                  {t('cancel')}
-                </button>
-              </>
-            )}
+            </div>
           </motion.div>
 
-          {/* Personal Stats & Timeline */}
           <div className="user-stats-container">
             <div className="stats-row">
               <div className="glass-card s-card">
                 <span className="label">{t('todayHours')}</span>
-                <h2 className="value">06:42:15</h2>
+                <h2 className="value">{logs.length > 0 ? "00:00:00" : "00:00:00"}</h2>
               </div>
               <div className="glass-card s-card">
                 <span className="label">{t('weeklyProgress')}</span>
-                <h2 className="value">32.5h / 40h</h2>
+                <h2 className="value">0.0h / 40h</h2>
               </div>
             </div>
 
@@ -466,27 +813,60 @@ const Attendance = () => {
                   <div className="no-logs">{t('noLogs')}</div>
                 )}
               </div>
-
             </div>
           </div>
         </div>
+        {renderModals()}
       </div>
     );
   }
 
-  // Admin View
   return (
     <div className="enterprise-page">
+      <div className="premium-toast-container">
+        <AnimatePresence>
+          {toasts.map((t) => (
+            <Toast key={t.id} {...t} onClose={removeToast} />
+          ))}
+        </AnimatePresence>
+      </div>
       <div className="attendance-layout">
-        {/* Left Profile Sidebar */}
         <aside className="profile-sidebar glass-card">
           <div className="profile-card-mini">
             <div className="avatar-wrapper">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ralph" alt="Profile" className="large-avatar" />
-              <span className="status-badge">Hourly</span>
+              <img src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} alt="Profile" className="large-avatar" />
+              <span className="status-badge">{user?.role || 'Staff'}</span>
             </div>
-            <h3>Ralph Edwards</h3>
-            <p className="role-text">Product Designer</p>
+            <h3>{user?.firstName} {user?.lastName}</h3>
+            <p className="role-text">{user?.jobTitle || 'System Administrator'}</p>
+            {user?.isBiometricEnrolled && (
+              <div className="biometric-verified-badge">
+                <Shield size={14} className="verified-icon" />
+                <span>BIOMETRIC SECURED</span>
+              </div>
+            )}
+          </div>
+
+          <div className="personal-actions-sidebar">
+            {isClockedIn ? (
+              <div className="status-indicator active">
+                <div className="pulse-dot"></div>
+                <span>ON DUTY</span>
+              </div>
+            ) : (
+              <div className="status-indicator inactive">
+                <span>OFF DUTY</span>
+              </div>
+            )}
+            
+            <button 
+              className={`btn ${isClockedIn ? 'btn-danger' : 'btn-primary'} btn-block`}
+              onClick={isClockedIn ? handleClockOut : (isManagement ? handleDirectClockIn : () => setShowScanner(true))}
+              style={isClockedIn ? { backgroundColor: '#ef4444', color: 'white', border: 'none' } : {}}
+            >
+              {isClockedIn ? <X size={16} /> : <Clock size={16} />}
+              {isClockedIn ? t('clockOut') : t('clockIn')}
+            </button>
           </div>
 
           <div className="hours-summary">
@@ -497,16 +877,9 @@ const Attendance = () => {
                 <span className="label">Total hours</span>
               </div>
             </div>
-            <div className="hours-grid">
-              <div className="h-item"><span>172 hrs</span><small>Regular</small></div>
-              <div className="h-item"><span>24 hrs</span><small>Overtime</small></div>
-              <div className="h-item"><span>00.00 hrs</span><small>PTO</small></div>
-              <div className="h-item"><span>20 hrs</span><small>Holiday</small></div>
-            </div>
           </div>
         </aside>
 
-        {/* Main Content Area */}
         <main className="attendance-main">
           <header className="main-header-row">
             <div className="title-section">
@@ -543,7 +916,9 @@ const Attendance = () => {
             </div>
             <div className="btn-row">
               <button className="btn-outline" onClick={handleExport}>{t('exportReport')}</button>
-              <button className="btn btn-primary" onClick={() => alert('Batch approval feature coming soon!')}>{t('approveAll')}</button>
+              <button className="btn btn-primary" onClick={() => setShowManualLog(true)}>
+                <UserPlus size={16} /> Log Manual Entry
+              </button>
             </div>
           </div>
 
@@ -581,12 +956,17 @@ const Attendance = () => {
                     </td>
                     <td><span className={`badge badge-${log.status?.toLowerCase()}`}>{t(log.status?.toLowerCase())}</span></td>
                     <td>
-                      {log.status === 'PENDING' && (
-                        <div className="approval-actions">
-                          <button className="status-btn approve" onClick={() => handleStatusUpdate(log.id, 'APPROVED')} title="Approve"><Check size={14} /></button>
-                          <button className="status-btn reject" onClick={() => handleStatusUpdate(log.id, 'REJECTED')} title="Reject"><X size={14} /></button>
-                        </div>
-                      )}
+                      <div className="approval-actions">
+                        {log.status === 'PENDING' && (
+                          <>
+                            <button className="status-btn approve" onClick={() => handleStatusUpdate(log.id, 'APPROVED')} title="Approve"><Check size={14} /></button>
+                            <button className="status-btn reject" onClick={() => handleStatusUpdate(log.id, 'REJECTED')} title="Reject"><X size={14} /></button>
+                          </>
+                        )}
+                        <button className="status-btn delete" onClick={() => handleDeleteLog(log.id)} title="Purge Log" style={{ color: '#ef4444' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -595,37 +975,7 @@ const Attendance = () => {
           </div>
         </main>
       </div>
-
-      <AnimatePresence>
-        {selectedProof && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="proof-modal-overlay"
-            onClick={() => setSelectedProof(null)}
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="proof-modal-content"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="modal-header">
-                <h3>{t('biometricSnapshot')}</h3>
-                <button className="close-btn" onClick={() => setSelectedProof(null)}><X size={20} /></button>
-              </div>
-              <div className="proof-image-container">
-                <img src={selectedProof} alt="Biometric Proof" />
-              </div>
-              <div className="modal-footer">
-                <p>{t('capturedDuring')}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {renderModals()}
     </div>
   );
 };

@@ -21,6 +21,22 @@
   color: var(--text-dim);
 }
 
+.loading-state-hub {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  color: var(--text-secondary);
+  gap: 16px;
+}
+
+.loading-state-hub p {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
 .sites-layout {
   display: grid;
   grid-template-columns: 1fr 400px;
@@ -64,6 +80,47 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.site-actions-premium {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.icon-btn-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn-small.edit {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--primary);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.icon-btn-small.edit:hover {
+  background: var(--primary);
+  color: #000;
+}
+
+.icon-btn-small.delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.icon-btn-small.delete:hover {
+  background: #ef4444;
+  color: #fff;
 }
 
 .site-icon-wrapper {

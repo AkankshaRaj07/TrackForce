@@ -1,18 +1,24 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, 
   Plus, 
   Search, 
   Activity, 
   Shield, 
-  MoreVertical,
-  Users
+  Edit2,
+  Trash2,
+  Users,
+  Loader2
 } from 'lucide-react';
 import './Sites.css';
 
 import { useEffect, useState } from 'react';
-import { fetchSites, updateSiteCoordinates, createSite } from '../api/api';
+import { fetchSites, createSite, deleteSite, updateSite } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import AddSiteModal from '../components/AddSiteModal';
+import Toast from '../components/Toast';
+import type { ToastType } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Sites = () => {
   const { user } = useAuth();
@@ -22,6 +28,20 @@ const Sites = () => {
   const [sites, setSites] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
+  const [editingSite, setEditingSite] = useState<any>(null);
+  const [toasts, setToasts] = useState<any[]>([]);
+
+  const addToast = (message: string, type: ToastType = 'info') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   useEffect(() => {
     loadSites();
@@ -33,94 +53,82 @@ const Sites = () => {
       if (isManager) {
         setSites(data);
       } else {
-        // Employee only sees their assigned site
         setSites(data.filter((s: any) => s.id === user?.siteId));
       }
     } catch (err) {
-      console.error(err);
+      addToast('Failed to load operational hubs', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSetLocation = async (siteId: string) => {
-    const method = window.confirm("Set location using current device GPS? (Click 'Cancel' to search for an address instead)");
-    
-    if (method) {
-      if (!navigator.geolocation) {
-        alert("Geolocation is not supported");
-        return;
-      }
+  const handleDeleteSite = (siteId: string) => {
+    setSiteToDelete(siteId);
+    setIsConfirmOpen(true);
+  };
 
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          await updateSiteCoordinates(siteId, latitude, longitude);
-          alert("Hub location updated successfully via GPS!");
-          loadSites();
-        } catch (err: any) {
-          alert(err.message);
-        }
-      }, (error) => {
-        alert("Please allow location access to set hub coordinates.");
-      });
-    } else {
-      const address = window.prompt("Enter the site address to search for:");
-      if (!address) return;
-
-      setLoading(true);
-      try {
-        // Simple geocoding using Nominatim (OpenStreetMap)
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-        const data = await response.json();
-
-        if (data && data.length > 0) {
-          const { lat, lon, display_name } = data[0];
-          const confirmUpdate = window.confirm(`Found location: ${display_name}\n\nUpdate site coordinates to: ${lat}, ${lon}?`);
-          
-          if (confirmUpdate) {
-            await updateSiteCoordinates(siteId, parseFloat(lat), parseFloat(lon));
-            alert("Hub location updated successfully via address search!");
-            loadSites();
-          }
-        } else {
-          alert("Location not found. Please try a more specific address.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Failed to search for location. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+  const confirmDelete = async () => {
+    if (!siteToDelete) return;
+    try {
+      await deleteSite(siteToDelete);
+      addToast('Hub deleted successfully', 'success');
+      loadSites();
+    } catch (err: any) {
+      addToast(err.message, 'error');
+    } finally {
+      setSiteToDelete(null);
+      setIsConfirmOpen(false);
     }
   };
 
-  const handleAddSite = async () => {
-    const name = window.prompt('Enter Site Name:');
-    if (!name) return;
-    const location = window.prompt('Enter Site Location (Address):');
-    if (!location) return;
-
+  const handleSaveSite = async (siteData: any) => {
     try {
-      await createSite({ name, location, managerName: 'Auto Assigned' });
-      alert('Site created successfully!');
+      if (editingSite) {
+        await updateSite(editingSite.id, siteData);
+        addToast('Hub Configuration Updated', 'success');
+      } else {
+        await createSite(siteData);
+        addToast('Hub Node Initialized Successfully!', 'success');
+      }
       loadSites();
     } catch (err: any) {
-      alert(err.message);
+      addToast(err.message || 'Action failed', 'error');
+      throw err;
     }
   };
 
   return (
     <div className="sites-page">
+      <div className="premium-toast-container">
+        <AnimatePresence>
+          {toasts.map((t) => (
+            <Toast key={t.id} {...t} onClose={removeToast} />
+          ))}
+        </AnimatePresence>
+      </div>
+
       <header className="page-header-premium">
         <div className="header-text">
-          <h1>Operational Hubs</h1>
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            Operational Hubs
+          </motion.h1>
           <p>Configure geo-fencing and manage site-specific workforce assignments.</p>
         </div>
         {isManager && (
-          <button className="btn btn-primary" onClick={handleAddSite}>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-primary" 
+            onClick={() => {
+              setEditingSite(null);
+              setIsModalOpen(true);
+            }}
+          >
             <Plus size={18} /> Add New Site
-          </button>
+          </motion.button>
         )}
       </header>
 
@@ -139,59 +147,86 @@ const Sites = () => {
           </div>
 
           <div className="sites-grid">
-            {sites.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map((site) => (
-              <motion.div 
-                key={site.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card site-card"
-              >
-                <div className="site-card-header">
-                  <div className="site-icon-wrapper">
-                    <MapPin size={20} />
+            {loading ? (
+              <div className="loading-state-hub">
+                <Loader2 className="spin" size={40} />
+                <p>Synchronizing Hub Data...</p>
+              </div>
+            ) : (
+              sites.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map((site) => (
+                <motion.div 
+                  key={site.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card site-card"
+                >
+                  <div className="site-card-header">
+                    <div className="site-icon-wrapper">
+                      <MapPin size={20} />
+                    </div>
+                    <div className="site-status">
+                      <span className="status-dot active"></span>
+                      ACTIVE
+                    </div>
+                    {isManager && (
+                      <div className="site-actions-premium">
+                        <button 
+                          className="icon-btn-small edit" 
+                          title="Edit Hub"
+                          onClick={() => {
+                            setEditingSite(site);
+                            setIsModalOpen(true);
+                          }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="icon-btn-small delete" 
+                          title="Remove Hub"
+                          onClick={() => handleDeleteSite(site.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="site-status">
-                    <span className="status-dot active"></span>
-                    ACTIVE
-                  </div>
-                  {isManager && <button className="icon-btn-small"><MoreVertical size={16} /></button>}
-                </div>
-                
-                <div className="site-card-body">
-                  <h3>{site.name}</h3>
-                  <p className="address">{site.location}</p>
                   
-                  <div className="site-stats-row">
-                    <div className="site-stat">
-                      <Users size={14} />
-                      <span>{site._count?.employees || 0} Employees</span>
+                  <div className="site-card-body">
+                    <h3>{site.name}</h3>
+                    <p className="address">{site.location}</p>
+                    
+                    <div className="site-stats-row">
+                      <div className="site-stat">
+                        <Users size={14} />
+                        <span>{site._count?.employees || 0} Employees</span>
+                      </div>
+                      <div className="site-stat">
+                        <Shield size={14} />
+                        <span>300m Fence</span>
+                      </div>
                     </div>
-                    <div className="site-stat">
-                      <Shield size={14} />
-                      <span>300m Fence</span>
-                    </div>
+                    
+                    {site.latitude && site.latitude !== 0 ? (
+                      <div className="coord-badge">
+                        📍 {site.latitude.toFixed(4)}, {site.longitude.toFixed(4)}
+                      </div>
+                    ) : (
+                      <div className="coord-badge warning">
+                        ⚠️ No Geofence Set
+                      </div>
+                    )}
                   </div>
-                  
-                  {site.latitude && site.latitude !== 0 ? (
-                    <div className="coord-badge">
-                      📍 {site.latitude.toFixed(4)}, {site.longitude.toFixed(4)}
-                    </div>
-                  ) : (
-                    <div className="coord-badge warning">
-                      ⚠️ No Geofence Set
-                    </div>
-                  )}
-                </div>
 
-                <div className="site-card-footer">
-                  {isManager && (
-                    <button className="btn-text" onClick={() => handleSetLocation(site.id)}>
-                      <MapPin size={14} /> Set Hub Location
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  <div className="site-card-footer">
+                    {isManager && (
+                      <button className="btn-text" onClick={() => addToast('Opening hub analytics...', 'info')}>
+                        <MapPin size={14} /> View Hub Map
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
 
@@ -205,7 +240,6 @@ const Sites = () => {
               </div>
             </div>
             <div className="map-visual-mock">
-              {/* Abstract Map Visualization */}
               <div className="visual-circle main-hub"></div>
               <div className="visual-circle sub-hub-1"></div>
               <div className="visual-circle sub-hub-2"></div>
@@ -231,6 +265,27 @@ const Sites = () => {
           </div>
         </div>
       </div>
+
+      <AddSiteModal 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingSite(null);
+        }}
+        onSave={handleSaveSite}
+        addToast={addToast}
+        initialData={editingSite}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        title="Delete Operational Hub"
+        message="CRITICAL ACTION: Deleting this hub will unassign all employees from their current station. This action cannot be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setIsConfirmOpen(false)}
+        confirmText="Confirm Delete"
+        variant="danger"
+      />
     </div>
   );
 };

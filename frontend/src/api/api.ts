@@ -10,7 +10,7 @@ const getAuthHeaders = () => {
 };
 
 const handleResponse = async (response: Response) => {
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     localStorage.removeItem('tf_token');
     localStorage.removeItem('tf_user');
     window.location.href = '/login';
@@ -38,7 +38,15 @@ export const fetchEmployees = async () => {
     headers: getAuthHeaders()
   });
   await handleResponse(response);
-  if (!response.ok) throw new Error('Failed to fetch employees');
+  return response.json();
+};
+
+export const fetchEmployeeById = async (id: string) => {
+  const response = await fetch(`${BASE_URL}/employees/${id}`, {
+    headers: getAuthHeaders()
+  });
+  await handleResponse(response);
+  if (!response.ok) throw new Error('Failed to fetch employee intelligence');
   return response.json();
 };
 
@@ -61,6 +69,19 @@ export const deleteEmployee = async (id: string) => {
     headers: getAuthHeaders()
   });
   if (!response.ok) throw new Error('Failed to delete employee');
+  return response.json();
+};
+
+export const updateEmployee = async (id: string, employeeData: any) => {
+  const response = await fetch(`${BASE_URL}/employees/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(employeeData)
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to update employee');
+  }
   return response.json();
 };
 
@@ -257,5 +278,43 @@ export const createSecurityAlert = async (alertData: any) => {
     body: JSON.stringify(alertData)
   });
   if (!response.ok) throw new Error('Failed to create security alert');
+  return response.json();
+};
+
+export const deleteSite = async (siteId: string) => {
+  const response = await fetch(`${BASE_URL}/sites/${siteId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if (!response.ok) throw new Error('Failed to delete hub');
+  return response.json();
+};
+
+export const updateSite = async (siteId: string, siteData: any) => {
+  const response = await fetch(`${BASE_URL}/sites/${siteId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(siteData)
+  });
+  if (!response.ok) throw new Error('Failed to update hub configuration');
+  return response.json();
+};
+
+export const logManualAttendance = async (data: any) => {
+  const response = await fetch(`${BASE_URL}/attendance/manual`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  });
+  await handleResponse(response);
+  return response.json();
+};
+
+export const deleteAttendance = async (id: string) => {
+  const response = await fetch(`${BASE_URL}/attendance/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if (!response.ok) throw new Error('Failed to purge log');
   return response.json();
 };

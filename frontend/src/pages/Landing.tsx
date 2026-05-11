@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, MapPin, Activity, ArrowRight, Languages, Lock, Globe, Zap } from 'lucide-react';
+import { Shield, MapPin, ArrowRight, Languages, Lock, Globe, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './Landing.css';

@@ -22,7 +22,6 @@ import { useAuth } from '../context/AuthContext';
 
 const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const { user, logout } = useAuth();
-  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
@@ -68,21 +67,9 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
       <button className="mobile-menu-btn" onClick={onMenuClick}>
         <Menu size={24} />
       </button>
-      <div className="search-container">
-        <Search size={18} className="search-icon" />
-        <input type="text" placeholder={t('search')} />
-      </div>
+      <div className="topbar-spacer"></div>
 
       <div className="topbar-actions">
-        <button className="action-btn" onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'vi' : 'en')} title="Change Language">
-          <Languages size={20} />
-          <span className="lang-code">{i18n.language.toUpperCase()}</span>
-        </button>
-
-        <button className="action-btn" onClick={toggleTheme} title="Toggle Theme">
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-
         <button className="action-btn">
           <Bell size={20} />
           <span className="notification-dot"></span>

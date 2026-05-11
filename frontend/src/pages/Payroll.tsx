@@ -1,204 +1,235 @@
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Wallet, 
+  Clock, 
   TrendingUp, 
   Download, 
-  CheckCircle2, 
-  Clock, 
-  DollarSign,
-  ChevronRight,
-  Filter,
-  Search
+  FileText,
+  CreditCard,
+  Wallet,
+  ArrowUpRight,
+  Search,
+  CheckCircle2
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { fetchPayroll, processPayroll, fetchPayrollStats } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
+import Toast from '../components/Toast';
+import type { ToastType } from '../components/Toast';
 import './Payroll.css';
 
 const StatCard = ({ icon, label, value, color }: any) => (
   <motion.div 
-    whileHover={{ scale: 1.02 }}
-    className="glass-card payroll-stat-card"
-    style={{ '--accent-color': color } as any}
+    whileHover={{ y: -5 }}
+    className="glass-card stat-card-premium"
   >
-    <div className="p-stat-icon">{icon}</div>
-    <div className="p-stat-info">
-      <span className="p-stat-label">{label}</span>
-      <h3 className="p-stat-value">{value}</h3>
+    <div className="stat-icon-wrap" style={{ color }}>
+      {icon}
+    </div>
+    <div className="stat-content">
+      <p className="stat-label">{label}</p>
+      <h3 className="stat-value">{value}</h3>
+    </div>
+    <div className="stat-trend positive">
+      <ArrowUpRight size={14} />
+      <span>+12.5%</span>
     </div>
   </motion.div>
 );
 
 const Payroll = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
-  const isManager = user?.role === 'MANAGER';
-  const isManagement = isAdmin || isManager;
-
-  const [payroll, setPayroll] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>({ totalPayout: 0, totalHours: 0, overtimeHours: 0 });
+  const { isAdmin } = useAuth();
+  const [payrollData, setPayrollData] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [toasts, setToasts] = useState<any[]>([]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [payrollData, statsData] = await Promise.all([
-          fetchPayroll(),
-          isManagement ? fetchPayrollStats() : Promise.resolve(null)
-        ]);
-        
-        if (isManagement) {
-          setPayroll(payrollData);
-          if (statsData) setStats(statsData);
-        } else {
-          setPayroll(payrollData.filter((p: any) => p.employeeId === user?.employeeId));
-        }
-      } catch (error) {
-        console.error('Payroll Sync Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [isManagement, user]);
-
-  const totalPayout = isManagement ? stats.totalPayout : payroll.reduce((acc, curr) => acc + curr.earnings, 0);
-  const totalHours = isManagement ? stats.totalHours : payroll.reduce((acc, curr) => acc + curr.totalHours, 0);
-  const overtimeCount = isManagement ? stats.overtimeHours : payroll.filter(p => p.overtimeHours > 0).length;
-
-  const filteredPayroll = payroll.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleExport = () => {
-    exportToCSV(payroll, 'Payroll_Report');
+  const addToast = (message: string, type: ToastType = 'info') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
   };
 
-  const handleProcessPayments = async () => {
-    if (!window.confirm('Process all pending payments?')) return;
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  useEffect(() => {
+    loadPayrollData();
+  }, []);
+
+  const loadPayrollData = async () => {
     try {
-      await processPayroll();
-      alert('Payments processed successfully!');
-      setPayroll(payroll.map(p => ({ ...p, status: 'PAID' })));
+      const [data, statsData] = await Promise.all([
+        fetchPayroll(),
+        fetchPayrollStats()
+      ]);
+      setPayrollData(data);
+      setStats(statsData);
     } catch (err) {
-      alert('Failed to process payments');
+      addToast('Failed to load payroll intelligence', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <div className="loading-state">Calculating payroll intelligence...</div>;
+  const handleProcessPayroll = async () => {
+    setIsProcessing(true);
+    try {
+      await processPayroll();
+      addToast('Payments processed successfully!', 'success');
+      loadPayrollData();
+    } catch (err) {
+      addToast('Failed to process payments', 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleExport = () => {
+    exportToCSV(payrollData, 'Payroll_Registry');
+    addToast('Report generated successfully', 'success');
+  };
+
+  if (loading) return <div className="loading-state">Synchronizing Financial Nodes...</div>;
+
+  const filteredData = payrollData.filter(item => 
+    `${item.employee?.firstName} ${item.employee?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="payroll-container"
-    >
+    <div className="payroll-page">
+      <div className="premium-toast-container">
+        <AnimatePresence>
+          {toasts.map((t) => (
+            <Toast key={t.id} {...t} onClose={removeToast} />
+          ))}
+        </AnimatePresence>
+      </div>
+
       <header className="page-header-premium">
         <div className="header-text">
-          <h1>Payroll & Compensation</h1>
-          <p>Automated salary processing based on geofenced attendance logs.</p>
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            Financial Intelligence
+          </motion.h1>
+          <p>Managed payroll cycles and automated fund distributions.</p>
         </div>
         <div className="header-actions">
-          {isManagement && (
-            <>
-              <button className="btn btn-ghost" onClick={handleExport}><Download size={18} /> Export Batch</button>
-              <button className="btn btn-primary" onClick={handleProcessPayments}>Process All Payments</button>
-            </>
+          <button className="btn btn-ghost" onClick={handleExport}>
+            <Download size={18} /> Export Registry
+          </button>
+          {isAdmin && (
+            <button 
+              className="btn btn-primary" 
+              onClick={handleProcessPayroll}
+              disabled={isProcessing}
+            >
+              {isProcessing ? <RefreshCw className="spin" size={18} /> : <CreditCard size={18} />}
+              Process All Payments
+            </button>
           )}
         </div>
       </header>
 
-      <section className="payroll-stats-grid">
+      <div className="stats-grid-premium">
         <StatCard 
-          icon={<DollarSign size={20} />} 
-          label="Total Pending Payout" 
-          value={`$${totalPayout.toLocaleString()}`} 
-          color="var(--primary)" 
+          icon={<Wallet size={24} />} 
+          label="Total Payouts" 
+          value={`$${stats?.totalPayout?.toLocaleString() || '0'}`}
+          color="#f59e0b"
         />
         <StatCard 
-          icon={<Clock size={20} />} 
-          label="Total Billable Hours" 
-          value={`${totalHours.toFixed(1)}h`} 
-          color="var(--accent)" 
+          icon={<TrendingUp size={24} />} 
+          label="Active Recipients" 
+          value={stats?.activeRecipients || '0'}
+          color="#10b981"
         />
         <StatCard 
-          icon={<TrendingUp size={20} />} 
-          label="Overtime Sessions" 
-          value={overtimeCount} 
-          color="var(--primary)" 
+          icon={<Clock size={24} />} 
+          label="Processing Cycle" 
+          value="Bi-Weekly"
+          color="#6366f1"
         />
-      </section>
+        <StatCard 
+          icon={<CheckCircle2 size={24} />} 
+          label="System Status" 
+          value="Operational"
+          color="#10b981"
+        />
+      </div>
 
-      <div className="glass-card payroll-table-section">
-        <div className="table-header-controls">
-          <div className="search-box">
-            <Search size={18} />
-            <input 
-              type="text" 
-              placeholder="Filter by name or ID..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button className="filter-btn"><Filter size={18} /> Filter Period</button>
-        </div>
-
-        <div className="enterprise-table-wrapper">
-          <table className="enterprise-table">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Total Hours</th>
-                <th>Overtime</th>
-                <th>Base Salary</th>
-                <th>Gross Earnings</th>
-                <th>Status</th>
-                {isManagement && <th></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPayroll.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <div className="emp-brief">
-                      <div className="emp-initials">{item.name.charAt(0)}</div>
-                      <div className="v-stack">
-                        <span className="name">{item.name}</span>
-                        <span className="id">{item.employeeId}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td><span className="mono">{item.totalHours}h</span></td>
-                  <td>
-                    <span className={`ot-badge ${item.overtimeHours > 0 ? 'active' : ''}`}>
-                      {item.overtimeHours}h
-                    </span>
-                  </td>
-                  <td>${(item.totalHours - item.overtimeHours) * 25}</td>
-                  <td>
-                    <span className="gross-value">${item.earnings.toLocaleString()}</span>
-                  </td>
-                  <td>
-                    <span className="status-pill pending">
-                      <Clock size={12} /> {item.status}
-                    </span>
-                  </td>
-                  {isManagement && (
-                    <td>
-                      <button className="icon-btn-small"><ChevronRight size={18} /></button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="glass-card table-controls">
+        <div className="search-bar">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Search recipients..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
-    </motion.div>
+
+      <div className="glass-card table-container">
+        <table className="enterprise-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Period</th>
+              <th>Regular Hours</th>
+              <th>Overtime</th>
+              <th>Gross Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredData.map((item) => (
+              <tr key={item.id}>
+                <td className="emp-cell">
+                  <div className="tiny-avatar">
+                    {item.employee?.firstName?.charAt(0) || 'E'}
+                  </div>
+                  <span>{item.employee?.firstName || 'Unknown'} {item.employee?.lastName || ''}</span>
+                </td>
+                <td>
+                  {item.periodStart ? new Date(item.periodStart).toLocaleDateString() : 'Current'} - {item.periodEnd ? new Date(item.periodEnd).toLocaleDateString() : 'Period'}
+                </td>
+                <td>{item.totalHours || '0.0'} hrs</td>
+                <td>0.00 hrs</td>
+                <td className="amount-cell">
+                  ${(item.earnings || item.amount || 0).toLocaleString()}
+                </td>
+                <td>
+                  <span className={`badge badge-${(item.status || 'PENDING').toLowerCase()}`}>
+                    {item.status || 'PENDING'}
+                  </span>
+                </td>
+                <td>
+                  <button className="icon-btn" title="View Details">
+                    <FileText size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
+
+const RefreshCw = ({ className, size }: any) => (
+  <motion.div
+    animate={{ rotate: 360 }}
+    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+  >
+    <TrendingUp className={className} size={size} />
+  </motion.div>
+);
 
 export default Payroll;

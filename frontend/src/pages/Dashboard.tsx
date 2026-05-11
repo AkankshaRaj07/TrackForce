@@ -90,32 +90,56 @@ const Dashboard = () => {
           </button>
         </div>
       </header>
+      
+      {!isManagement && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`security-status-banner ${user?.isBiometricEnrolled ? 'verified' : 'unverified'}`}
+        >
+          <div className="banner-content">
+            <CheckCircle2 size={18} className="shield-icon" />
+            <div>
+              <strong>{user?.isBiometricEnrolled ? "Biometric Security Active" : "Action Required: Biometric Enrollment"}</strong>
+              <p>{user?.isBiometricEnrolled 
+                ? "Your identity is protected by facial recognition protocols." 
+                : "Complete enrollment in the Attendance section to secure your account."}
+              </p>
+            </div>
+          </div>
+          {!user?.isBiometricEnrolled && (
+            <button className="btn btn-sm btn-primary" onClick={() => navigate('/attendance')}>
+              Enroll Now
+            </button>
+          )}
+        </motion.div>
+      )}
 
       <section className="stats-grid-premium">
         <StatCard 
           icon={<Users size={24} />} 
-          label={isAdmin ? t('totalWorkforce') : isManager ? t('siteWorkforce') : t('myWeeklyHours')} 
-          value={isAdmin ? (stats?.totalEmployees || 0) : isManager ? (stats?.totalEmployees || 0) : "Live"} 
+          label={isManagement ? t('totalWorkforce') : t('myWeeklyHours')} 
+          value={isManagement ? (stats?.totalEmployees || 0) : (stats?.weeklyHours || "0.0")} 
           trend={12.5} 
           color="var(--accent)" 
         />
         <StatCard 
           icon={<Activity size={24} />} 
           label={isManagement ? t('currentAttendance') : t('myEfficiency')} 
-          value={isManagement ? `${stats?.activeNow || 0}` : "94%"} 
+          value={isManagement ? `${stats?.activeNow || 0}` : `${stats?.efficiency || 0}%`} 
           trend={3.2} 
           color="var(--primary)" 
         />
         <StatCard 
           icon={<MapPin size={24} />} 
-          label={isAdmin ? t('operationalSites') : isManager ? t('currentHub') : t('activeSite')} 
-          value={isAdmin ? (stats?.sites || 0) : (user?.site?.name || 'Global')} 
+          label={isManagement ? t('operationalSites') : t('activeSite')} 
+          value={isManagement ? (stats?.sites || 0) : (stats?.activeSite || user?.site?.name || 'Assigned Site')} 
           color="var(--accent)" 
         />
         <StatCard 
           icon={<Clock size={24} />} 
           label={isManagement ? t('avgShiftDuration') : t('totalEarnings')} 
-          value={isManagement ? `${stats?.avgShift || 0}h` : "Synced"} 
+          value={isManagement ? `${stats?.avgShift || 0}h` : `$${stats?.earnings || "0.00"}`} 
           trend={-1.2} 
           color="var(--primary)" 
         />

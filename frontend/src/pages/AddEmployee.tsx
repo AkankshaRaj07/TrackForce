@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-  X, 
   User, 
   Briefcase, 
-  MapPin, 
-  Shield, 
   Camera, 
   Lock, 
   ChevronLeft,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Save,
+  UserPlus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { fetchSites, createEmployee } from '../api/api';
+import { fetchSites, createEmployee, fetchEmployeeById, updateEmployee } from '../api/api';
 import './AddEmployee.css';
 
 const AddEmployee = () => {
+  const { id } = useParams();
+  const isEditMode = !!id;
   const { isAdmin } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [hubs, setHubs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditMode);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -39,8 +41,34 @@ const AddEmployee = () => {
   });
 
   useEffect(() => {
-    fetchSites().then(setHubs).catch(console.error);
-  }, []);
+    const initPage = async () => {
+      try {
+        const sites = await fetchSites();
+        setHubs(sites);
+
+        if (isEditMode) {
+          const emp = await fetchEmployeeById(id);
+          setFormData({
+            employeeId: emp.employeeId || '',
+            firstName: emp.firstName || '',
+            lastName: emp.lastName || '',
+            email: emp.email || '',
+            password: '', // Leave blank for edit
+            designation: emp.designation || '',
+            role: emp.role || 'EMPLOYEE',
+            siteId: emp.siteId || '',
+            avatar: emp.avatar || null
+          });
+        }
+      } catch (err) {
+        console.error("Initialization error:", err);
+        setError("Failed to load workforce intelligence");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initPage();
+  }, [id, isEditMode]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,14 +86,31 @@ const AddEmployee = () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      await createEmployee(formData);
+      if (isEditMode) {
+        const updateData = { ...formData };
+        if (!updateData.password) {
+          delete (updateData as any).password;
+        }
+        await updateEmployee(id, updateData);
+      } else {
+        await createEmployee(formData);
+      }
       navigate('/employees');
     } catch (err: any) {
-      setError(err.message || 'Failed to create employee');
+      setError(err.message || 'Mission failed. Please check network protocols.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="loading-state-premium">
+        <div className="spinner-obsidian"></div>
+        <p>Synchronizing Workforce Data...</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -79,8 +124,8 @@ const AddEmployee = () => {
             <ChevronLeft size={24} />
           </button>
           <div>
-            <h1>{t('addNewEmployee')}</h1>
-            <p>{t('createEmployeeProfileSubtext', 'Set up a new workforce member with biometric access.')}</p>
+            <h1>{isEditMode ? "Edit Employee Profile" : "Add New Workforce Member"}</h1>
+            <p>{isEditMode ? "Modify existing workforce data and biometric access levels." : "Set up a new workforce member with biometric access."}</p>
           </div>
         </div>
       </header>
@@ -97,7 +142,7 @@ const AddEmployee = () => {
           <div className="form-section">
             <div className="section-header">
               <User size={20} />
-              <h3>{t('basicInformation', 'Basic Information')}</h3>
+              <h3>Basic Information</h3>
             </div>
             
             <div className="avatar-upload-premium">
@@ -119,24 +164,24 @@ const AddEmployee = () => {
                 style={{ display: 'none' }}
               />
               <div className="upload-text">
-                <h4>{t('profilePicture')}</h4>
-                <p>{t('uploadPhotoInfo')}</p>
+                <h4>Profile Picture</h4>
+                <p>Upload a high-quality photo for identification</p>
               </div>
             </div>
 
             <div className="form-grid-3">
               <div className="form-group">
-                <label>{t('employeeID')}</label>
+                <label>Employee ID (Login ID)</label>
                 <input 
                   type="text" 
                   required 
                   value={formData.employeeId}
                   onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                  placeholder="e.g. TF005" 
+                  placeholder="e.g. TF001" 
                 />
               </div>
               <div className="form-group">
-                <label>{t('firstName')}</label>
+                <label>First Name</label>
                 <input 
                   type="text" 
                   required 
@@ -146,7 +191,7 @@ const AddEmployee = () => {
                 />
               </div>
               <div className="form-group">
-                <label>{t('lastName')}</label>
+                <label>Last Name</label>
                 <input 
                   type="text" 
                   required 
@@ -161,11 +206,11 @@ const AddEmployee = () => {
           <div className="form-section">
             <div className="section-header">
               <Lock size={20} />
-              <h3>{t('securityAuth', 'Security & Authentication')}</h3>
+              <h3>Security & Authentication</h3>
             </div>
             <div className="form-grid">
               <div className="form-group">
-                <label>{t('emailAddress')}</label>
+                <label>Email Address</label>
                 <input 
                   type="email" 
                   required 
@@ -175,10 +220,10 @@ const AddEmployee = () => {
                 />
               </div>
               <div className="form-group">
-                <label>{t('initialPassword')}</label>
+                <label>{isEditMode ? "New Password (Leave blank to keep current)" : "Initial Password"}</label>
                 <input 
                   type="password" 
-                  required 
+                  required={!isEditMode}
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   placeholder="••••••••" 
@@ -190,11 +235,11 @@ const AddEmployee = () => {
           <div className="form-section">
             <div className="section-header">
               <Briefcase size={20} />
-              <h3>{t('assignmentRole', 'Assignment & Role')}</h3>
+              <h3>Assignment & Role</h3>
             </div>
             <div className="form-grid-3">
               <div className="form-group">
-                <label>{t('designation')}</label>
+                <label>Designation</label>
                 <input 
                   type="text" 
                   value={formData.designation}
@@ -203,7 +248,7 @@ const AddEmployee = () => {
                 />
               </div>
               <div className="form-group">
-                <label>{t('accessLevel')}</label>
+                <label>Access Level</label>
                 {isAdmin ? (
                   <select 
                     value={formData.role}
@@ -220,7 +265,7 @@ const AddEmployee = () => {
                 )}
               </div>
               <div className="form-group">
-                <label>{t('defaultAssignment', 'Default Assignment')}</label>
+                <label>Default Assignment</label>
                 <select 
                   required
                   value={formData.siteId}
@@ -235,20 +280,23 @@ const AddEmployee = () => {
             </div>
           </div>
 
-          <div className="enrollment-notice">
-            <CheckCircle2 size={24} />
-            <div>
-              <h4>Face ID Enrollment Ready</h4>
-              <p>The employee will be required to scan their face during their first login to complete biometric enrollment.</p>
+          {!isEditMode && (
+            <div className="enrollment-notice">
+              <CheckCircle2 size={24} />
+              <div>
+                <h4>Face ID Enrollment Ready</h4>
+                <p>The member will be required to scan their face during their first login to complete biometric enrollment.</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="form-actions-premium">
             <button type="button" onClick={() => navigate('/employees')} className="btn btn-ghost">
-              {t('cancel')}
+              Cancel
             </button>
             <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
-              {isSubmitting ? t('processing', 'Processing...') : t('createProfile')}
+              {isSubmitting ? "Processing..." : (isEditMode ? "Save Changes" : "Create Profile")}
+              {isEditMode ? <Save size={18} style={{ marginLeft: '8px' }} /> : <UserPlus size={18} style={{ marginLeft: '8px' }} />}
             </button>
           </div>
         </form>

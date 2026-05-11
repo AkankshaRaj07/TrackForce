@@ -33,7 +33,6 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 // Simple Layout Wrapper
 const PlatformLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const { user } = useAuth();
 
   return (
     <div className="app-container">
@@ -64,6 +63,7 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><PlatformLayout><Dashboard /></PlatformLayout></ProtectedRoute>} />
           <Route path="/employees" element={<ProtectedRoute><PlatformLayout><Employees /></PlatformLayout></ProtectedRoute>} />
           <Route path="/employees/add" element={<ProtectedRoute adminOnly><PlatformLayout><AddEmployee /></PlatformLayout></ProtectedRoute>} />
+          <Route path="/employees/edit/:id" element={<ProtectedRoute><PlatformLayout><AddEmployee /></PlatformLayout></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><PlatformLayout><Attendance /></PlatformLayout></ProtectedRoute>} />
           <Route path="/tracking" element={<ProtectedRoute><PlatformLayout><Tracking /></PlatformLayout></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute><PlatformLayout><Payroll /></PlatformLayout></ProtectedRoute>} />

@@ -140,6 +140,18 @@ i18n
           verifyingIdentity: 'Verifying Identity...',
           matchingWithAdminPhoto: 'Matching with Admin Profile Photo...',
           identityMismatch: 'Identity Mismatch! Please contact your administrator.',
+          enrollmentRequired: 'Identity Enrollment Required',
+          enrollmentSubtext: 'Please complete your one-time biometric registration to access attendance features.',
+          beginEnrollment: 'Begin Biometric Enrollment',
+          enrollmentSuccess: 'Identity Enrollment Successful!',
+          secureVerification: 'Secure Verification',
+          verificationRequired: 'Verification Required',
+          verificationInstruction: 'Please position your face in the scanner to clock in.',
+          clockedInAt: 'Clocked in at',
+          startSecureVerification: 'Start Secure Verification',
+          cancel: 'Cancel',
+          verifying: 'Verifying...',
+          clockIn: 'Clock In Now',
         }
       },
       vi: {
