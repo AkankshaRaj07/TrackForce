@@ -17,7 +17,8 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
     location: '',
     latitude: 0,
     longitude: 0,
-    managerName: 'Admin'
+    managerName: 'Admin',
+    geofenceRadius: 300
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,7 +35,8 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
         location: initialData.location || '',
         latitude: initialData.latitude || 0,
         longitude: initialData.longitude || 0,
-        managerName: initialData.managerName || 'Admin'
+        managerName: initialData.managerName || 'Admin',
+        geofenceRadius: initialData.geofenceRadius || 300
       });
       setSearchQuery(initialData.location || '');
     } else {
@@ -43,7 +45,8 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
         location: '',
         latitude: 0,
         longitude: 0,
-        managerName: 'Admin'
+        managerName: 'Admin',
+        geofenceRadius: 300
       });
       setSearchQuery('');
     }
@@ -239,9 +242,19 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
 
               <div className="geofence-info-box">
                 <Shield size={24} />
-                <div>
-                  <h4>Automated Security Perimeter</h4>
-                  <p>Initializing a 300m radius strict geofence around these coordinates.</p>
+                <div className="geofence-config">
+                  <h4>Security Perimeter (Meters)</h4>
+                  <div className="radius-input-wrapper">
+                    <input 
+                      type="number" 
+                      value={formData.geofenceRadius}
+                      onChange={(e) => setFormData({...formData, geofenceRadius: parseInt(e.target.value) || 0})}
+                      min="10"
+                      max="5000"
+                    />
+                    <span>meters</span>
+                  </div>
+                  <p>Strict geofencing will be enforced within this radius.</p>
                 </div>
               </div>
 

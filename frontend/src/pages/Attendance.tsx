@@ -23,6 +23,21 @@ import type { ToastType } from '../components/Toast';
 
 import './Attendance.css';
 
+import PremiumSelect from '../components/PremiumSelect';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const base64ToBlob = (base64: string) => {
+  const byteString = atob(base64.split(',')[1]);
+  const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
+};
+
 const Attendance = () => {
   const { user, updateUser } = useAuth();
   const { t } = useTranslation();
@@ -260,8 +275,7 @@ const Attendance = () => {
       const biometricProof = captureFrame();
       if (!biometricProof) throw new Error("Capture failed - check camera visibility");
 
-      const referenceImg = await faceapi.fetchImage(user.avatar);
-      const capturedImg = await faceapi.fetchImage(biometricProof);
+      const avatarUrl = user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`;
 
       // Create a timeout promise
       const timeoutPromise = new Promise((_, reject) => 
@@ -269,10 +283,13 @@ const Attendance = () => {
       );
 
       const detectionsPromise = (async () => {
+        const referenceImg = await faceapi.fetchImage(avatarUrl);
+        const capturedImg = await faceapi.fetchImage(biometricProof);
         const ref = await faceapi.detectSingleFace(referenceImg).withFaceLandmarks().withFaceDescriptor();
         const cap = await faceapi.detectSingleFace(capturedImg).withFaceLandmarks().withFaceDescriptor();
         return { ref, cap };
       })();
+
 
       const { ref: refDetection, cap: capDetection } = await Promise.race([detectionsPromise, timeoutPromise]) as any;
 
@@ -328,7 +345,8 @@ const Attendance = () => {
     let isMatch = false;
     if (modelsLoaded && user?.avatar) {
       try {
-        const referenceImg = await faceapi.fetchImage(user.avatar);
+        const avatarUrl = user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`;
+        const referenceImg = await faceapi.fetchImage(avatarUrl);
         const capturedImg = await faceapi.fetchImage(biometricProof);
 
         // AI Timeout Guard
@@ -379,7 +397,17 @@ const Attendance = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          await clockIn(user.id, latitude, longitude, biometricProof);
+          const formData = new FormData();
+          formData.append('latitude', latitude.toString());
+          formData.append('longitude', longitude.toString());
+          formData.append('fullName', `${user.firstName} ${user.lastName}`);
+          
+          if (biometricProof) {
+            const proofBlob = base64ToBlob(biometricProof);
+            formData.append('biometricProof', proofBlob, `proof-${user.id}-${Date.now()}.jpg`);
+          }
+
+          await clockIn(user.id, latitude, longitude, formData);
           setScanStatus('success');
           addToast("Clock-in Successful. Welcome back!", 'success');
           const updatedLogs = await fetchTodayLogs(user.id);
@@ -424,7 +452,14 @@ const Attendance = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          await clockIn(user.id, latitude, longitude, user.avatar || '');
+          const formData = new FormData();
+          formData.append('latitude', latitude.toString());
+          formData.append('longitude', longitude.toString());
+          
+          // In direct clock-in, we use the user's avatar as proof if needed or just skip
+          // For now, let's just send the coordinates in a FormData for consistency
+          
+          await clockIn(user.id, latitude, longitude, formData);
           setScanStatus('success');
           addToast("Management Override: Clock-in Successful.", 'success');
           const updatedLogs = await fetchTodayLogs(user.id);
@@ -499,7 +534,7 @@ const Attendance = () => {
 
               <div className="verification-info-premium">
                 <div className="v-item"><MapPin size={14} /> {user?.site?.name || 'Assigned Hub'}</div>
-                <div className="v-item"><Shield size={14} /> Biometric Secure</div>
+                <div className="v-item">Biometric Secure</div>
               </div>
 
               <div className="modal-actions-premium">
@@ -716,8 +751,9 @@ const Attendance = () => {
           >
             <div className="verification-placeholder">
               <div className="placeholder-icon">
-                <Shield size={48} color={user?.isBiometricEnrolled ? 'var(--primary)' : 'var(--error)'} />
+                <Shield size={64} color="var(--primary)" style={{ opacity: 0.2 }} />
               </div>
+
               <h3>{user?.isBiometricEnrolled ? (isClockedIn ? t('status') + ': ' + t('active') : t('verificationRequired')) : t('enrollmentRequired')}</h3>
               <p>
                 {!user?.isBiometricEnrolled 
@@ -831,7 +867,11 @@ const Attendance = () => {
         <aside className="profile-sidebar glass-card">
           <div className="profile-card-mini">
             <div className="avatar-wrapper">
-              <img src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} alt="Profile" className="large-avatar" />
+              <img 
+                src={user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`) : "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} 
+                alt="Profile" 
+                className="large-avatar" 
+              />
               <span className="status-badge">{user?.role || 'Staff'}</span>
             </div>
             <h3>{user?.firstName} {user?.lastName}</h3>
@@ -885,26 +925,58 @@ const Attendance = () => {
             </div>
             <div className="date-picker-button">
               <Calendar size={16} />
-              <span>1st Jun - 31st Jul 2022</span>
+              <span>
+                {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </span>
             </div>
+
           </header>
 
           <section className="breakdown-banner glass-card">
-            <div className="breakdown-info">
-              <div className="b-text">
-                <span className="label">Global Efficiency</span>
-                <h2 className="value">94.2%</h2>
-              </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: '94%' }}></div>
-              </div>
-            </div>
-            <div className="breakdown-stats">
-              <div className="s-item"><span className="dot approved"></span> {t('approved')}: 92 hrs</div>
-              <div className="s-item"><span className="dot rejected"></span> {t('rejected')}: 0 hrs</div>
-              <div className="s-item"><span className="dot pending"></span> {t('pending')}: 0 hrs</div>
-            </div>
+            {(() => {
+              const calcHours = (logs: any[]) => logs.reduce((acc, log) => {
+                if (log.clockIn && log.clockOut) {
+                  return acc + (new Date(log.clockOut).getTime() - new Date(log.clockIn).getTime()) / (1000 * 60 * 60);
+                }
+                return acc;
+              }, 0);
+
+              const approvedHours = calcHours(allLogs.filter(l => l.status === 'APPROVED' || l.status === 'PRESENT'));
+              const rejectedHours = calcHours(allLogs.filter(l => l.status === 'REJECTED'));
+              const pendingHours = calcHours(allLogs.filter(l => l.status === 'PENDING'));
+              const totalHours = approvedHours + rejectedHours + pendingHours;
+              const efficiency = totalHours > 0 ? (approvedHours / totalHours) * 100 : 0;
+
+              return (
+                <>
+                  <div className="breakdown-info">
+                    <div className="b-text">
+                      <span className="label">Global Efficiency</span>
+                      <h2 className="value">{efficiency.toFixed(1)}%</h2>
+                    </div>
+                    <div className="progress-track">
+                      <div className="progress-fill" style={{ width: `${efficiency}%` }}></div>
+                    </div>
+                  </div>
+                  <div className="breakdown-stats">
+                    <div className="s-item">
+                      <span className="dot approved"></span> 
+                      {t('approved')}: {Math.round(approvedHours)} hrs
+                    </div>
+                    <div className="s-item">
+                      <span className="dot rejected"></span> 
+                      {t('rejected')}: {Math.round(rejectedHours)} hrs
+                    </div>
+                    <div className="s-item">
+                      <span className="dot pending"></span> 
+                      {t('pending')}: {Math.round(pendingHours)} hrs
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </section>
+
 
           <div className="action-bar">
             <div className="toggle-group">
@@ -944,7 +1016,7 @@ const Attendance = () => {
                     <td>{log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '---'}</td>
                     <td>
                       {log.biometricProof ? (
-                        <button className="btn-proof" onClick={() => setSelectedProof(log.biometricProof)}>
+                        <button className="btn-proof" onClick={() => setSelectedProof(log.biometricProof.startsWith('http') ? log.biometricProof : `${API_URL}${log.biometricProof}`)}>
                           <Camera size={14} /> {t('viewProof')}
                         </button>
                       ) : (

@@ -10,11 +10,14 @@ import Tracking from './pages/Tracking';
 import Payroll from './pages/Payroll';
 import Sites from './pages/Sites';
 import Settings from './pages/Settings';
+import EmployeeDetails from './pages/EmployeeDetails';
+import CompleteProfile from './pages/CompleteProfile';
 import Sidebar from './layout/Sidebar';
 import Topbar from './layout/Topbar';
 import './App.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -52,29 +55,33 @@ const PlatformLayout = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
 
-          {/* Private/Platform Routes */}
-          <Route path="/dashboard" element={<ProtectedRoute><PlatformLayout><Dashboard /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/employees" element={<ProtectedRoute><PlatformLayout><Employees /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/employees/add" element={<ProtectedRoute adminOnly><PlatformLayout><AddEmployee /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/employees/edit/:id" element={<ProtectedRoute><PlatformLayout><AddEmployee /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/attendance" element={<ProtectedRoute><PlatformLayout><Attendance /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/tracking" element={<ProtectedRoute><PlatformLayout><Tracking /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/payroll" element={<ProtectedRoute><PlatformLayout><Payroll /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/sites" element={<ProtectedRoute><PlatformLayout><Sites /></PlatformLayout></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><PlatformLayout><Settings /></PlatformLayout></ProtectedRoute>} />
+            {/* Private/Platform Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><PlatformLayout><Dashboard /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/employees" element={<ProtectedRoute><PlatformLayout><Employees /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/employees/add" element={<ProtectedRoute adminOnly><PlatformLayout><AddEmployee /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/employees/edit/:id" element={<ProtectedRoute><PlatformLayout><AddEmployee /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/employees/complete/:id" element={<ProtectedRoute><PlatformLayout><CompleteProfile /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/employees/:id" element={<ProtectedRoute><PlatformLayout><EmployeeDetails /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/attendance" element={<ProtectedRoute><PlatformLayout><Attendance /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/tracking" element={<ProtectedRoute><PlatformLayout><Tracking /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/payroll" element={<ProtectedRoute><PlatformLayout><Payroll /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/sites" element={<ProtectedRoute><PlatformLayout><Sites /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><PlatformLayout><Settings /></PlatformLayout></ProtectedRoute>} />
 
-          {/* Redirect any other path to Landing */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            {/* Redirect any other path to Landing */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

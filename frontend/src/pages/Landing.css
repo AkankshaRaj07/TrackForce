@@ -1,15 +1,33 @@
 :root {
-  --landing-bg: #020617;
   --landing-accent: #f59e0b;
+}
+
+.landing-page {
+  --landing-bg: #020617;
+  --landing-text: #f8fafc;
+  --landing-subtext: #94a3b8;
   --landing-glass: rgba(15, 23, 42, 0.8);
   --landing-border: rgba(255, 255, 255, 0.08);
+  --landing-card-hover: rgba(255, 255, 255, 0.02);
+  --landing-nav-bg: rgba(2, 6, 23, 0.8);
+}
+
+.landing-page.light {
+  --landing-bg: #f8fafc;
+  --landing-text: #0f172a;
+  --landing-subtext: #475569;
+  --landing-glass: rgba(255, 255, 255, 0.8);
+  --landing-border: rgba(0, 0, 0, 0.08);
+  --landing-card-hover: rgba(0, 0, 0, 0.02);
+  --landing-nav-bg: rgba(248, 250, 252, 0.8);
 }
 
 .landing-page {
   background-color: var(--landing-bg);
-  color: #f8fafc;
+  color: var(--landing-text);
   font-family: 'Outfit', sans-serif;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* --- Navigation --- */
@@ -21,7 +39,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(2, 6, 23, 0.8);
+  background: var(--landing-nav-bg);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--landing-border);
 }
@@ -125,7 +143,7 @@
 }
 
 .feature-card-premium p {
-  color: #94a3b8;
+  color: var(--landing-subtext);
   line-height: 1.6;
   font-size: 16px;
 }
@@ -145,7 +163,7 @@
 .icon-box {
   width: 50px;
   height: 50px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--landing-card-hover);
   border-radius: 12px;
   display: flex;
   align-items: center;

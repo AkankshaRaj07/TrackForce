@@ -137,12 +137,26 @@
 @media (max-width: 768px) {
   .payroll-stats-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .payroll-stat-card {
+    padding: 16px;
+  }
+
+  .table-header-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
   }
   
   .enterprise-table th:nth-child(3),
   .enterprise-table td:nth-child(3),
   .enterprise-table th:nth-child(4),
-  .enterprise-table td:nth-child(4) {
+  .enterprise-table td:nth-child(4),
+  .enterprise-table th:nth-child(5),
+  .enterprise-table td:nth-child(5) {
     display: none;
   }
 }
+

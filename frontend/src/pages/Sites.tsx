@@ -202,7 +202,7 @@ const Sites = () => {
                       </div>
                       <div className="site-stat">
                         <Shield size={14} />
-                        <span>300m Fence</span>
+                        <span>{site.geofenceRadius || 500}m Fence</span>
                       </div>
                     </div>
                     

@@ -12,18 +12,24 @@ import {
   Smartphone,
   MapPin,
   Calendar,
-  X
+  X,
+  Phone,
+  Coins,
+  TrendingUp,
 } from 'lucide-react';
 import './Employees.css';
 
 import { useEffect, useState } from 'react';
-import { fetchEmployees, deleteEmployee, updateEmployee } from '../api/api';
+import { fetchEmployees, deleteEmployee, updateEmployee, fetchSites } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 import type { ToastType } from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import { useNavigate } from 'react-router-dom';
+import PremiumSelect from '../components/PremiumSelect';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Employees = () => {
   const { isAdmin } = useAuth();
@@ -32,14 +38,14 @@ const Employees = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
+  const [hubs, setHubs] = useState<any[]>([]);
+  const [siteFilter, setSiteFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
   
   const [toasts, setToasts] = useState<any[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
-  const [isResetting, setIsResetting] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
 
   const addToast = (message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -52,14 +58,20 @@ const Employees = () => {
 
   useEffect(() => {
     loadEmployees();
+    loadHubs();
   }, []);
 
   useEffect(() => {
-    const filtered = employees.filter(emp => 
-      `${emp.firstName} ${emp.lastName} ${emp.employeeId} ${emp.email}`.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = employees.filter(emp => {
+      const nameMatch = `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+      const idMatch = emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = searchTerm === '' || nameMatch || idMatch;
+      const matchesRole = roleFilter === 'ALL' || emp.role === roleFilter;
+      const matchesSite = siteFilter === 'ALL' || emp.siteId === siteFilter;
+      return matchesSearch && matchesRole && matchesSite;
+    });
     setFilteredEmployees(filtered);
-  }, [searchTerm, employees]);
+  }, [searchTerm, roleFilter, siteFilter, employees]);
 
   const loadEmployees = async () => {
     try {
@@ -69,6 +81,15 @@ const Employees = () => {
       addToast('Failed to load workforce', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHubs = async () => {
+    try {
+      const data = await fetchSites();
+      setHubs(data);
+    } catch (err) {
+      console.error('Failed to load hubs');
     }
   };
 
@@ -120,7 +141,7 @@ const Employees = () => {
           <p>Master ledger of all active identity nodes and security parameters.</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-ghost" onClick={() => exportToCSV(employees, 'Workforce_Master')}>
+          <button className="btn btn-ghost" onClick={() => exportToCSV(filteredEmployees, `Workforce_Master_${new Date().toISOString().split('T')[0]}`)}>
             <Download size={18} /> Export Ledger
           </button>
           {isAdmin && (
@@ -131,25 +152,50 @@ const Employees = () => {
         </div>
       </header>
 
-      <div className="glass-card table-controls" style={{ marginBottom: '24px', padding: '16px 24px' }}>
-        <div className="search-bar">
-          <Search size={18} color="var(--text-secondary)" />
+      <div className="employees-toolbar-premium">
+        <div className="search-bar-premium">
+          <Search size={20} className="search-icon" />
           <input 
             type="text" 
-            placeholder="Search by name, ID, email or role..." 
+            placeholder="Search identity ledger..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        <div className="filter-hub-premium">
+          <PremiumSelect 
+            placeholder="Filter Role"
+            value={roleFilter}
+            onChange={(val: string) => setRoleFilter(val)}
+            options={[
+              { label: 'All Roles', value: 'ALL' },
+              { label: 'Admin', value: 'ADMIN' },
+              { label: 'Manager', value: 'MANAGER' },
+              { label: 'Employee', value: 'EMPLOYEE' }
+            ]}
+            className="filter-dropdown"
+          />
+          <PremiumSelect 
+            placeholder="Filter Hub"
+            value={siteFilter}
+            onChange={(val: string) => setSiteFilter(val)}
+            options={[
+              { label: 'All Hubs', value: 'ALL' },
+              ...hubs.map(hub => ({ label: hub.name, value: hub.id }))
+            ]}
+            className="filter-dropdown"
+          />
+        </div>
       </div>
 
-      <div className="glass-card table-container" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="glass-card table-container-premium">
         <table className="employee-table">
           <thead>
             <tr>
               <th>Employee Name</th>
               <th>Login ID</th>
-              <th>Email Address</th>
+              <th>Phone Number</th>
               <th>Role & Status</th>
               <th>Hub</th>
               <th>Actions</th>
@@ -161,7 +207,14 @@ const Employees = () => {
                 <td>
                   <div className="emp-identity">
                     <div className="avatar-small">
-                      {emp.avatar ? <img src={emp.avatar} alt="" /> : emp.firstName.charAt(0)}
+                      {emp.avatar ? (
+                        <img 
+                          src={emp.avatar.startsWith('http') ? emp.avatar : `${API_URL}${emp.avatar}`} 
+                          alt="" 
+                        />
+                      ) : (
+                        emp.firstName.charAt(0)
+                      )}
                     </div>
                     <div className="name-stack">
                       <span className="full-name">{emp.firstName} {emp.lastName}</span>
@@ -170,7 +223,7 @@ const Employees = () => {
                   </div>
                 </td>
                 <td><span className="mono-badge">{emp.employeeId}</span></td>
-                <td><span className="email-text">{emp.email}</span></td>
+                <td><span className="email-text">{emp.phone || 'N/A'}</span></td>
                 <td>
                   <div className="role-status">
                     <span className="role-tag">{emp.role}</span>
@@ -180,7 +233,7 @@ const Employees = () => {
                 <td>{emp.site?.name || 'Unassigned'}</td>
                 <td>
                   <div className="action-row">
-                    <button className="action-icon-btn" onClick={() => setSelectedEmployee(emp)} title="View Node Details">
+                    <button className="action-icon-btn" onClick={() => navigate(`/employees/${emp.id}`)} title="View Node Details">
                       <Eye size={18} />
                     </button>
                     {isAdmin && (
@@ -200,98 +253,6 @@ const Employees = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Identity Detail Modal */}
-      <AnimatePresence>
-        {selectedEmployee && (
-          <div className="proof-modal-overlay">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="glass-card scanner-modal-obsidian identity-detail-modal"
-              style={{ maxWidth: '600px', width: '100%' }}
-            >
-              <div className="modal-header-premium">
-                <h3>Identity Node: {selectedEmployee.employeeId}</h3>
-                <button className="close-btn-premium" onClick={() => { setSelectedEmployee(null); setIsResetting(false); }}><X size={20} /></button>
-              </div>
-
-              <div className="identity-deep-view" style={{ padding: '24px' }}>
-                <div className="detail-hero">
-                  <div className="hero-avatar">
-                    {selectedEmployee.avatar ? <img src={selectedEmployee.avatar} alt="" /> : <div className="avatar-placeholder">{selectedEmployee.firstName.charAt(0)}</div>}
-                  </div>
-                  <div className="hero-text">
-                    <h2>{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>
-                    <span className="badge badge-admin">{selectedEmployee.role}</span>
-                  </div>
-                </div>
-
-                <div className="detail-grid-premium" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '24px' }}>
-                  <div className="detail-item-premium">
-                    <label><Mail size={14} /> Official Email</label>
-                    <span>{selectedEmployee.email}</span>
-                  </div>
-                  <div className="detail-item-premium">
-                    <label><Smartphone size={14} /> Contact Node</label>
-                    <span>{selectedEmployee.phone || 'Not Configured'}</span>
-                  </div>
-                  <div className="detail-item-premium">
-                    <label><MapPin size={14} /> Assigned Hub</label>
-                    <span>{selectedEmployee.site?.name || 'Unassigned'}</span>
-                  </div>
-                  <div className="detail-item-premium">
-                    <label><Calendar size={14} /> Join Date</label>
-                    <span>{new Date(selectedEmployee.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                <div className="security-section-premium" style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                  <h4 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Shield size={18} color="var(--primary)" /> Security Parameters
-                  </h4>
-                  <div className="security-stats" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="s-stat">
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Biometric Status</span>
-                      <p style={{ margin: 0, fontWeight: 700, color: selectedEmployee.isBiometricEnrolled ? 'var(--success)' : 'var(--error)' }}>
-                        {selectedEmployee.isBiometricEnrolled ? 'Verified & Enrolled' : 'Pending Enrollment'}
-                      </p>
-                    </div>
-                    {isAdmin && (
-                      <button className="btn btn-ghost btn-sm" onClick={() => setIsResetting(!isResetting)}>
-                        <Lock size={14} /> {isResetting ? 'Cancel Reset' : 'Force Password Reset'}
-                      </button>
-                    )}
-                  </div>
-
-                  <AnimatePresence>
-                    {isResetting && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        style={{ overflow: 'hidden', marginTop: '16px' }}
-                      >
-                        <div className="reset-form" style={{ display: 'flex', gap: '10px' }}>
-                          <input 
-                            type="text" 
-                            placeholder="Enter new administrative password..." 
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            style={{ flex: 1, padding: '10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'white' }}
-                          />
-                          <button className="btn btn-primary" onClick={handlePasswordReset}>Commit Reset</button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       <ConfirmModal
         isOpen={isConfirmOpen}

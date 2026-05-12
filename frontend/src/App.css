@@ -1,9 +1,10 @@
 .app-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   background-color: var(--bg);
-  overflow-x: hidden;
+  overflow: hidden;
+  position: relative;
 }
 
 
@@ -21,14 +22,17 @@
 }
 
 .sidebar-wrapper {
-  width: 260px;
+  width: 280px;
+  flex-shrink: 0;
   height: 100vh;
-  position: sticky;
+  position: fixed;
+  left: 0;
   top: 0;
   z-index: 1100;
   background: var(--surface);
   border-right: 1px solid var(--border);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 10px 0; /* Vertical breathing room */
 }
 
 @media (max-width: 1024px) {
@@ -48,14 +52,24 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   min-width: 0;
+  overflow: hidden;
+  margin-left: 280px; /* Synchronized with widened sidebar */
+  background: var(--bg);
+}
+
+@media (max-width: 1024px) {
+  .main-stage {
+    margin-left: 0;
+  }
 }
 
 .content-area {
   flex: 1;
-  padding: 40px;
+  padding: 40px 48px; /* High-fidelity horizontal and vertical breathing room */
   overflow-y: auto;
+  max-width: 1600px; /* Prevent over-stretching on ultra-wide displays */
 }
 
 @media (max-width: 768px) {

@@ -12,19 +12,18 @@ import { useTranslation } from 'react-i18next';
 import './Topbar.css';
 
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
+
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -35,10 +34,6 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
 
   const handleLogout = () => {
     logout();
@@ -95,9 +90,17 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             <span className="user-role-badge">{user?.role || 'Guest'}</span>
           </div>
           <div className="avatar-wrapper-top">
-            {user?.avatar ? <img src={user.avatar} alt="Avatar" /> : <User size={18} />}
+            {user?.avatar ? (
+              <img 
+                src={user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`} 
+                alt="Avatar" 
+              />
+            ) : (
+              <User size={18} />
+            )}
           </div>
         </div>
+
       </div>
     </header>
   );

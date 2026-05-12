@@ -2,10 +2,13 @@ import { motion } from 'framer-motion';
 import { Shield, MapPin, ArrowRight, Languages, Lock, Globe, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../context/ThemeContext'; 
+import { Sun, Moon } from 'lucide-react';
 import './Landing.css';
 
 const Landing = () => {
   const { t, i18n } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
 
   const toggleLanguage = () => {
     const nextLng = i18n.language === 'en' ? 'vi' : 'en';
@@ -13,10 +16,13 @@ const Landing = () => {
   };
 
   return (
-    <div className="landing-page">
+    <div className={`landing-page ${theme}`}>
       <nav className="landing-nav">
         <div className="logo-text">TRACK<span>FORCE</span></div>
         <div className="nav-links">
+          <button className="btn btn-ghost" onClick={toggleTheme} style={{ padding: '8px' }}>
+            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
           <button className="btn btn-ghost" onClick={toggleLanguage} style={{ fontSize: '14px' }}>
             <Languages size={16} style={{ marginRight: '8px' }} />
             {i18n.language === 'en' ? 'Tiếng Việt' : 'English'}
@@ -51,7 +57,6 @@ const Landing = () => {
             viewport={{ once: true }}
             className="feature-card-premium w-66"
           >
-            <div className="icon-box"><Shield size={24} /></div>
             <h3>{t('biometricIdentity')}</h3>
             <p style={{ maxWidth: '400px' }}>{t('biometricSubtext')}</p>
             <div className="biometric-visual-overlay"></div>

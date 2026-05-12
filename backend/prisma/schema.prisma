@@ -7,6 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // provider = "sqlite"
+
   url      = env("DATABASE_URL")
 }
 
@@ -15,16 +17,29 @@ model Employee {
   employeeId  String   @unique // The ID used for login (e.g., TF001)
   firstName   String
   lastName    String
-  email       String   @unique
+  email       String?  @unique
   password    String
-  role        String   @default("EMPLOYEE") // Changed from Role enum for SQLite
+  role        String   @default("EMPLOYEE")
   phone       String?
   designation String?
-  status      String   @default("ACTIVE")   // Changed from Status enum for SQLite
+  status      String   @default("ACTIVE")
   avatar      String?  // Base64 profile image
   
+  // Payroll Information
+  hourlyRate    Float?   @default(0.0)
+  overtimeType  String   @default("MULTIPLIER") // "FIXED" or "MULTIPLIER"
+  overtimeValue Float?   @default(1.5)          // e.g., 1.5x or $20.00
+  
+  // Expanded Identity Manifest
+  passportNumber String?
+  passportExpiry DateTime?
+  passportIssue  DateTime?
+  dob            DateTime?
+  cvPath         String?
+  idDocPath      String?
+  
   // Relations
-  siteId      String?
+  siteId      String?  @unique // Enforce one employee per site
   site        Site?       @relation(fields: [siteId], references: [id])
   attendance  Attendance[]
   tracking    Tracking[]
@@ -37,16 +52,17 @@ model Employee {
 }
 
 model Site {
-  id          String       @id @default(uuid())
-  name        String
-  location    String
-  latitude    Float?       @default(0.0)
-  longitude   Float?       @default(0.0)
-  managerName String?
+  id              String       @id @default(uuid())
+  name            String
+  location        String
+  latitude        Float?       @default(0.0)
+  longitude       Float?       @default(0.0)
+  geofenceRadius  Float        @default(500) // Configurable radius in meters
+  managerName     String?
   
   // Relations
-  employees   Employee[]
-  attendance  Attendance[]
+  employees       Employee[]
+  attendance      Attendance[]
   
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt

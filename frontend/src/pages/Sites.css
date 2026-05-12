@@ -287,11 +287,16 @@
 
 @media (max-width: 1200px) {
   .sites-layout { grid-template-columns: 1fr; }
-  .map-preview-section { order: -1; }
+  .map-preview-card { order: -1; }
 }
 
 @media (max-width: 768px) {
-  .page-header-premium { flex-direction: column; align-items: flex-start; gap: 24px; }
+  .sites-page { gap: var(--spacing-lg); }
+  .page-header-premium { flex-direction: column; align-items: stretch; gap: 16px; }
+  .header-text h1 { font-size: 24px; }
   .page-header-premium .btn { width: 100%; justify-content: center; }
-  .sites-grid { grid-template-columns: 1fr; }
+  .sites-grid { grid-template-columns: 1fr; gap: 16px; }
+  .site-card { padding: 16px; }
+  .map-visual-mock { height: 250px; }
 }
+

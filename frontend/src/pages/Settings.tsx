@@ -21,6 +21,7 @@ import { fetchConfig, updateConfig as syncConfig, updateEmployee } from '../api/
 import Toast from '../components/Toast';
 import type { ToastType } from '../components/Toast';
 import './Settings.css';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Settings = () => {
   const { user, updateUser } = useAuth();
@@ -88,18 +89,18 @@ const Settings = () => {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && user) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result as string;
-          const updated = await updateEmployee(user.id, { avatar: base64 });
-          updateUser(updated);
-          addToast('Identity Node Updated Successfully!', 'success');
-        } catch (err) {
-          addToast('Failed to update biometric identifier', 'error');
-        }
-      };
-      reader.readAsDataURL(file);
+      try {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('employeeId', user.employeeId);
+        formData.append('fullName', `${user.firstName} ${user.lastName}`);
+        
+        const updated = await updateEmployee(user.id, formData);
+        updateUser(updated);
+        addToast('Identity Node Updated Successfully!', 'success');
+      } catch (err) {
+        addToast('Failed to update biometric identifier', 'error');
+      }
     }
   };
 
@@ -136,7 +137,11 @@ const Settings = () => {
             <h3>{t('identityNode')}</h3>
             <div className="avatar-edit">
               <div className="avatar-preview">
-                {avatar ? <img src={avatar} alt="User" /> : <User size={40} />}
+                {user?.avatar ? (
+                  <img src={user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`} alt="User" />
+                ) : (
+                  <User size={40} />
+                )}
                 <label htmlFor="avatar-upload" className="edit-btn">
                   <Camera size={16} />
                 </label>

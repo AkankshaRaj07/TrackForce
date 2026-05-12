@@ -40,8 +40,7 @@ const Sidebar = ({ onClose }: SidebarProps) => {
     <aside className="sidebar">
       <div className="logo-section">
         <div className="logo-brand">
-          <Shield className="logo-icon" size={28} color="var(--primary)" />
-          <span className="logo-text">Track<span>Force</span></span>
+          <span className="logo-text">TrackForce</span>
         </div>
         <button className="mobile-close-btn" onClick={onClose}>
           <X size={24} />

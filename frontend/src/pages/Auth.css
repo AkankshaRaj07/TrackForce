@@ -1,12 +1,37 @@
 .auth-page {
+  --auth-bg-start: #1e293b;
+  --auth-bg-end: #0f172a;
+  --auth-card-bg: rgba(15, 23, 42, 0.9);
+  --auth-text: #ffffff;
+  --auth-subtext: #94a3b8;
+  --auth-input-bg: rgba(2, 6, 23, 0.6);
+  --auth-input-text: #ffffff;
+  --auth-border: rgba(245, 158, 11, 0.2);
+  --auth-shadow: rgba(0, 0, 0, 0.8);
+  --auth-label: #e2e8f0;
+  
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top right, #1e293b, #0f172a);
+  background: radial-gradient(circle at top right, var(--auth-bg-start), var(--auth-bg-end));
   position: relative;
   overflow: hidden;
   font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.auth-page.light {
+  --auth-bg-start: #f8fafc;
+  --auth-bg-end: #e2e8f0;
+  --auth-card-bg: rgba(255, 255, 255, 0.9);
+  --auth-text: #0f172a;
+  --auth-subtext: #475569;
+  --auth-input-bg: #ffffff;
+  --auth-input-text: #0f172a;
+  --auth-border: rgba(245, 158, 11, 0.3);
+  --auth-shadow: rgba(0, 0, 0, 0.1);
+  --auth-label: #1e293b;
 }
 
 /* Background Mesh Pattern */
@@ -35,13 +60,13 @@
 }
 
 .auth-card-premium {
-  background: rgba(15, 23, 42, 0.9);
+  background: var(--auth-card-bg);
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border: 1px solid var(--auth-border);
   border-radius: 28px;
   padding: 48px;
   box-shadow: 
-    0 40px 100px -20px rgba(0, 0, 0, 0.8),
+    0 40px 100px -20px var(--auth-shadow),
     inset 0 1px 1px rgba(255, 255, 255, 0.05);
   position: relative;
 }
@@ -84,12 +109,12 @@
 .auth-header h2 {
   font-size: 32px;
   font-weight: 800;
-  color: white;
+  color: var(--auth-text);
   letter-spacing: -0.025em;
 }
 
 .auth-header p {
-  color: #94a3b8; /* Brighter subtext */
+  color: var(--auth-subtext);
   font-size: 15px;
   margin-top: 8px;
 }
@@ -109,7 +134,7 @@
 .form-group-premium label {
   font-size: 14px;
   font-weight: 600;
-  color: #e2e8f0; /* Crisp slate-white */
+  color: var(--auth-label);
   margin-left: 4px;
 }
 
@@ -129,11 +154,11 @@
 
 .input-wrapper-premium input {
   width: 100% !important;
-  padding: 18px 20px 18px 60px !important; /* Increased padding and forced application */
-  background: rgba(2, 6, 23, 0.6) !important;
-  border: 1px solid rgba(245, 158, 11, 0.15) !important;
+  padding: 18px 20px 18px 60px !important;
+  background: var(--auth-input-bg) !important;
+  border: 1px solid var(--auth-border) !important;
   border-radius: 18px;
-  color: white !important;
+  color: var(--auth-input-text) !important;
   font-size: 16px;
   outline: none;
   transition: all 0.3s ease;

@@ -9,7 +9,8 @@ import {
   Wallet,
   ArrowUpRight,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import { fetchPayroll, processPayroll, fetchPayrollStats } from '../api/api';
 import { exportToCSV } from '../utils/export';
@@ -128,7 +129,7 @@ const Payroll = () => {
               onClick={handleProcessPayroll}
               disabled={isProcessing}
             >
-              {isProcessing ? <RefreshCw className="spin" size={18} /> : <CreditCard size={18} />}
+              {isProcessing ? <RefreshCwIcon className="spin" size={18} /> : <CreditCard size={18} />}
               Process All Payments
             </button>
           )}
@@ -139,7 +140,7 @@ const Payroll = () => {
         <StatCard 
           icon={<Wallet size={24} />} 
           label="Total Payouts" 
-          value={`$${stats?.totalPayout?.toLocaleString() || '0'}`}
+          value={`${stats?.totalPayout?.toLocaleString() || '0'} ₫`}
           color="#f59e0b"
         />
         <StatCard 
@@ -199,10 +200,10 @@ const Payroll = () => {
                 <td>
                   {item.periodStart ? new Date(item.periodStart).toLocaleDateString() : 'Current'} - {item.periodEnd ? new Date(item.periodEnd).toLocaleDateString() : 'Period'}
                 </td>
-                <td>{item.totalHours || '0.0'} hrs</td>
-                <td>0.00 hrs</td>
+                <td>{item.regularHours || '0.0'} hrs</td>
+                <td>{item.overtimeHours || '0.00'} hrs</td>
                 <td className="amount-cell">
-                  ${(item.earnings || item.amount || 0).toLocaleString()}
+                  {(item.earnings || 0).toLocaleString()} ₫
                 </td>
                 <td>
                   <span className={`badge badge-${(item.status || 'PENDING').toLowerCase()}`}>
@@ -223,12 +224,12 @@ const Payroll = () => {
   );
 };
 
-const RefreshCw = ({ className, size }: any) => (
+const RefreshCwIcon = ({ className, size }: any) => (
   <motion.div
     animate={{ rotate: 360 }}
     transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
   >
-    <TrendingUp className={className} size={size} />
+    <RefreshCw className={className} size={size} />
   </motion.div>
 );
 

@@ -139,7 +139,7 @@ const Dashboard = () => {
         <StatCard 
           icon={<Clock size={24} />} 
           label={isManagement ? t('avgShiftDuration') : t('totalEarnings')} 
-          value={isManagement ? `${stats?.avgShift || 0}h` : `$${stats?.earnings || "0.00"}`} 
+          value={isManagement ? `${stats?.avgShift || 0}h` : `${(stats?.earnings || 0).toLocaleString()} ₫`} 
           trend={-1.2} 
           color="var(--primary)" 
         />

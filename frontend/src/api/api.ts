@@ -13,10 +13,10 @@ const BASE_URL = sanitizedBaseUrl + '/api';
 console.log(`[Executive Connectivity]: Sync Target => ${BASE_URL}`);
 
 // Helper to get token from localStorage
-const getAuthHeaders = () => {
+const getAuthHeaders = (isFormData = false) => {
   const token = localStorage.getItem('tf_token');
   return {
-    'Content-Type': 'application/json',
+    ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
 };
@@ -62,11 +62,21 @@ export const fetchEmployeeById = async (id: string) => {
   return response.json();
 };
 
+export const fetchEmployeeFullProfile = async (id: string) => {
+  const response = await fetch(`${BASE_URL}/employees/${id}/full-profile`, {
+    headers: getAuthHeaders()
+  });
+  await handleResponse(response);
+  if (!response.ok) throw new Error('Failed to fetch full employee intelligence');
+  return response.json();
+};
+
 export const createEmployee = async (employeeData: any) => {
+  const isFormData = employeeData instanceof FormData;
   const response = await fetch(`${BASE_URL}/employees`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(employeeData)
+    headers: getAuthHeaders(isFormData),
+    body: isFormData ? employeeData : JSON.stringify(employeeData)
   });
   if (!response.ok) {
     const errorData = await response.json();
@@ -85,10 +95,11 @@ export const deleteEmployee = async (id: string) => {
 };
 
 export const updateEmployee = async (id: string, employeeData: any) => {
+  const isFormData = employeeData instanceof FormData;
   const response = await fetch(`${BASE_URL}/employees/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(employeeData)
+    headers: getAuthHeaders(isFormData),
+    body: isFormData ? employeeData : JSON.stringify(employeeData)
   });
   if (!response.ok) {
     const errorData = await response.json();
@@ -105,11 +116,23 @@ export const fetchStats = async () => {
   return response.json();
 };
 
-export const clockIn = async (employeeId: string, latitude: number, longitude: number, biometricProof?: string) => {
+export const clockIn = async (employeeId: string, latitude: number, longitude: number, biometricProof?: any) => {
+  const isFormData = biometricProof instanceof FormData;
+  
+  let body;
+  let headers = getAuthHeaders(isFormData);
+
+  if (isFormData) {
+    body = biometricProof;
+    // Ensure latitude/longitude are in the FormData if it's passed as such
+  } else {
+    body = JSON.stringify({ latitude, longitude, biometricProof });
+  }
+
   const response = await fetch(`${BASE_URL}/attendance/clock-in/${employeeId}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ latitude, longitude, biometricProof })
+    headers,
+    body
   });
   await handleResponse(response);
   if (!response.ok) {
