@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { User, Lock, ArrowRight, Shield, AlertCircle, Languages } from 'lucide-react';
+import { User, Lock, ArrowRight, AlertCircle, Languages } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

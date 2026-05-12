@@ -1,4 +1,5 @@
-import { LogOut, X, Shield, LayoutDashboard, Users, MapPin, Wallet, Building2, Settings, Calendar } from 'lucide-react';
+import { LogOut, X, LayoutDashboard, Users, MapPin, Wallet, Building2, Settings, Calendar } from 'lucide-react';
+
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';

@@ -13,9 +13,8 @@ import {
   Eye,
   EyeOff,
   TrendingUp,
-  Coins,
-  ChevronDown,
-  Upload,
+  Upload, 
+
   FileText,
   CreditCard
 } from 'lucide-react';
@@ -36,8 +35,8 @@ const AddEmployee = () => {
   const [hubs, setHubs] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
-  const [searchTerm, setSearchTerm] = useState('');
   const [employees, setEmployees] = useState<any[]>([]);
+
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Shield, MapPin, ArrowRight, Languages, Lock, Globe, Zap } from 'lucide-react';
+import { MapPin, ArrowRight, Languages, Lock, Globe, Zap } from 'lucide-react';
+
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext'; 

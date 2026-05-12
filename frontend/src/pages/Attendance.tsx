@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+
+
 import * as faceapi from 'face-api.js';
 import { 
   Check, 
@@ -15,6 +17,8 @@ import {
   Trash2,
   UserPlus
 } from 'lucide-react';
+
+
 import { clockIn, deleteAttendance, fetchTodayLogs, fetchAllLogs, updateAttendanceStatus, clockOut, startBreak, endBreak, enrollBiometric, createSecurityAlert, fetchEmployees, fetchSites, logManualAttendance } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
@@ -23,7 +27,7 @@ import type { ToastType } from '../components/Toast';
 
 import './Attendance.css';
 
-import PremiumSelect from '../components/PremiumSelect';
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 

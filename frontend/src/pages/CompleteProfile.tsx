@@ -6,14 +6,15 @@ import {
   Save,
   FileText,
   CreditCard,
-  Calendar,
+
   Upload,
   CheckCircle,
   Camera,
   ShieldCheck,
   Fingerprint
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchEmployeeFullProfile, updateEmployee, enrollBiometric } from '../api/api';
 import './CompleteProfile.css';

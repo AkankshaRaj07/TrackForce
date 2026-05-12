@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Briefcase,
@@ -7,7 +8,6 @@ import {
   Clock,
   Coins,
   CreditCard,
-  Download,
   Edit3,
   ExternalLink,
   Eye,
@@ -18,15 +18,18 @@ import {
   Lock,
   Mail,
   MapPin,
-  Phone,
-  ShieldCheck,
   Smartphone,
   TrendingUp,
   User,
   Wallet,
-  X
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
+
+
+import { motion } from 'framer-motion';
+
+
+
 import { fetchEmployeeFullProfile } from '../api/api';
 import DocumentModal from '../components/DocumentModal';
 import './EmployeeDetails.css';

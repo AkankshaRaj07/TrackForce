@@ -1,26 +1,19 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+
 import { 
   Search, 
   UserPlus, 
   Download,
-  Shield,
   Edit3,
   XCircle,
   Eye,
-  Lock,
-  Mail,
-  Smartphone,
-  MapPin,
-  Calendar,
-  X,
-  Phone,
-  Coins,
-  TrendingUp,
 } from 'lucide-react';
+
 import './Employees.css';
 
 import { useEffect, useState } from 'react';
-import { fetchEmployees, deleteEmployee, updateEmployee, fetchSites } from '../api/api';
+import { fetchEmployees, deleteEmployee, fetchSites } from '../api/api';
+
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
@@ -111,17 +104,7 @@ const Employees = () => {
     }
   };
 
-  const handlePasswordReset = async () => {
-    if (!selectedEmployee || !newPassword) return;
-    try {
-      await updateEmployee(selectedEmployee.id, { password: newPassword });
-      addToast(`Password for ${selectedEmployee.firstName} reset successfully!`, 'success');
-      setIsResetting(false);
-      setNewPassword('');
-    } catch (err) {
-      addToast('Failed to reset credential node', 'error');
-    }
-  };
+
 
   if (loading) return <div className="loading-state">Decrypting Workforce Ledger...</div>;
 

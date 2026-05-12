@@ -27,7 +27,7 @@ const Settings = () => {
   const { user, updateUser } = useAuth();
   const { t, i18n } = useTranslation();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
-  const avatar = user?.avatar || null;
+
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<any[]>([]);
   
