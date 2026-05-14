@@ -321,7 +321,7 @@ export const deleteSite = async (siteId: string) => {
     method: 'DELETE',
     headers: getAuthHeaders()
   });
-  if (!response.ok) throw new Error('Failed to delete hub');
+  if (!response.ok) throw new Error('Failed to delete site');
   return response.json();
 };
 
@@ -331,7 +331,7 @@ export const updateSite = async (siteId: string, siteData: any) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(siteData)
   });
-  if (!response.ok) throw new Error('Failed to update hub configuration');
+  if (!response.ok) throw new Error('Failed to update site configuration');
   return response.json();
 };
 

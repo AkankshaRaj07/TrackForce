@@ -105,10 +105,11 @@
 }
 
 .ot-badge.active {
-  background: rgba(245, 158, 11, 0.1);
+  background: var(--primary-glow);
   color: var(--primary);
   font-weight: 600;
 }
+
 
 .gross-value {
   font-weight: 700;
@@ -116,9 +117,10 @@
 }
 
 .status-pill.pending {
-  background: rgba(245, 158, 11, 0.1);
+  background: var(--primary-glow);
   color: var(--primary);
 }
+
 
 .icon-btn-small {
   background: transparent;

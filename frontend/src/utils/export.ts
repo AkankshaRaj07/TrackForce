@@ -16,7 +16,7 @@ export const exportToCSV = (data: any[], filename: string) => {
     { label: 'Overtime Value', key: 'overtimeValue' },
     { label: 'Passport Number', key: 'passportNumber' },
     { label: 'Date of Birth', key: 'dob', transform: (v: any) => v ? new Date(v).toLocaleDateString() : '--' },
-    { label: 'Assigned Hub', key: 'site', transform: (v: any) => v?.name || 'Unassigned' },
+    { label: 'Assigned Site', key: 'site', transform: (v: any) => v?.name || 'Unassigned' },
     { label: 'Enrolled On', key: 'createdAt', transform: (v: any) => new Date(v).toLocaleDateString() }
   ];
 

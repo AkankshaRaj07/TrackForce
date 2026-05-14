@@ -32,7 +32,7 @@ const Employees = () => {
   const [filteredEmployees, setFilteredEmployees] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [hubs, setHubs] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [siteFilter, setSiteFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
   
@@ -51,7 +51,7 @@ const Employees = () => {
 
   useEffect(() => {
     loadEmployees();
-    loadHubs();
+    loadSites();
   }, []);
 
   useEffect(() => {
@@ -77,14 +77,15 @@ const Employees = () => {
     }
   };
 
-  const loadHubs = async () => {
+  const loadSites = async () => {
     try {
       const data = await fetchSites();
-      setHubs(data);
+      setSites(data);
     } catch (err) {
-      console.error('Failed to load hubs');
+      console.error('Failed to load sites');
     }
   };
+
 
   const handleDeleteEmployee = (id: string) => {
     setEmployeeToDelete(id);
@@ -146,7 +147,7 @@ const Employees = () => {
           />
         </div>
         
-        <div className="filter-hub-premium">
+        <div className="filter-site-premium">
           <PremiumSelect 
             placeholder="Filter Role"
             value={roleFilter}
@@ -160,12 +161,12 @@ const Employees = () => {
             className="filter-dropdown"
           />
           <PremiumSelect 
-            placeholder="Filter Hub"
+            placeholder="Filter Site"
             value={siteFilter}
             onChange={(val: string) => setSiteFilter(val)}
             options={[
-              { label: 'All Hubs', value: 'ALL' },
-              ...hubs.map(hub => ({ label: hub.name, value: hub.id }))
+              { label: 'All Sites', value: 'ALL' },
+              ...sites.map(site => ({ label: site.name, value: site.id }))
             ]}
             className="filter-dropdown"
           />
@@ -180,7 +181,7 @@ const Employees = () => {
               <th>Login ID</th>
               <th>Phone Number</th>
               <th>Role & Status</th>
-              <th>Hub</th>
+              <th>Site</th>
               <th>Actions</th>
             </tr>
           </thead>

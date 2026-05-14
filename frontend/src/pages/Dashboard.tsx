@@ -25,27 +25,31 @@ import { useEffect, useState } from 'react';
 import { fetchStats } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
-const StatCard = ({ icon, label, value, trend, color }: any) => (
+const StatCard = ({ icon, label, value, trend, color, description }: any) => (
   <motion.div
-    whileHover={{ scale: 1.02 }}
-    className="glass-card stat-card-premium"
-    style={{ '--accent-color': color } as any}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+    className="glass-card command-card"
+    style={{ '--card-accent': color } as any}
   >
-    <div className="stat-card-top">
-      <div className="stat-icon-wrapper">
+    <div className="card-glow"></div>
+    <div className="card-content-elite">
+      <div className="icon-badge-premium">
         {icon}
       </div>
-      <h2 className="stat-value">{value}</h2>
-    </div>
-    <div className="stat-info">
-      <span className="stat-label">{label}</span>
-      {trend && (
-        <span className={`stat-trend ${trend > 0 ? 'up' : 'down'}`}>
-          {trend > 0 ? <TrendingUp size={14} /> : <TrendingUp size={14} style={{ transform: 'rotate(90deg)' }} />}
-          {trend}%
-        </span>
+      <div className="stat-data">
+        <h2 className="stat-value-elite">{value}</h2>
+        <span className="stat-label-elite">{label}</span>
+      </div>
+      {trend !== undefined && (
+        <div className={`trend-pill ${trend > 0 ? 'positive' : 'negative'}`}>
+          {trend > 0 ? <TrendingUp size={12} /> : <TrendingUp size={12} style={{ transform: 'rotate(90deg)' }} />}
+          {Math.abs(trend)}%
+        </div>
       )}
     </div>
+    {description && <p className="card-description-elite">{description}</p>}
   </motion.div>
 );
 
@@ -70,27 +74,53 @@ const Dashboard = () => {
   const chartData = stats?.weeklyTrend || [];
 
   return (
-    <div className="dashboard-wrapper">
-      <header className="dashboard-header-premium">
-        <div className="header-text">
-          <h1>
-            {isAdmin ? t('workforceIntelligence') : isManager ? t('hubOperations') : t('myPerformance')}
-          </h1>
-          <p>
-            {isAdmin
-              ? t('adminDashboardSubtext')
-              : isManager
-                ? t('managerDashboardSubtext')
-                : t('employeeDashboardSubtext')}
-          </p>
+    <div className="dashboard-container-elite">
+      <header className="command-header">
+        <div className="identity-section">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="user-avatar-elite"
+          >
+            <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.firstName}`} alt="User" />
+            <div className="status-ring"></div>
+          </motion.div>
+          <div className="welcome-text">
+            <h1>{t('welcomeBack')}, {user?.firstName}</h1>
+            <div className="role-chip">
+              <Activity size={12} />
+              <span>{user?.role} STATUS: OPTIMIZED</span>
+            </div>
+          </div>
         </div>
-        <div className="header-actions">
-          {isManagement && <button className="btn btn-ghost" onClick={handleExport}>{t('exportReport')}</button>}
-          <button className="btn btn-primary" onClick={() => isManagement ? navigate('/settings') : navigate('/attendance')}>
-            {isManagement ? t('configuration') : "Clock In / Out"}
+        
+        <div className="action-hub-elite">
+          {isManagement && (
+            <button className="btn btn-secondary-elite" onClick={handleExport}>
+              <CheckCircle2 size={16} /> {t('exportReport')}
+            </button>
+          )}
+          <button className="btn btn-primary-elite" onClick={() => isManagement ? navigate('/sites') : navigate('/attendance')}>
+            {isManagement ? t('manageSites') : "Go to Terminal"}
           </button>
         </div>
       </header>
+
+      <div className="hero-insight-banner">
+        <div className="insight-content">
+          <div className="insight-icon">
+            <Activity size={32} />
+          </div>
+          <div className="insight-text">
+            <h3>Operational Overview</h3>
+            <p>{isManagement ? "Workforce efficiency is up 12% this week across all active sites." : "You've achieved 98% attendance accuracy this month. Keep it up!"}</p>
+          </div>
+        </div>
+        <div className="insight-visual">
+          <div className="pulse-circle"></div>
+          <div className="pulse-circle delay-1"></div>
+        </div>
+      </div>
 
       {!isManagement && (
         <motion.div
@@ -116,106 +146,155 @@ const Dashboard = () => {
         </motion.div>
       )}
 
-      <section className="stats-grid-premium">
+      <section className="intelligence-grid">
         <StatCard
-          icon={<Users size={24} />}
+          icon={<Users size={20} />}
           label={isManagement ? t('totalWorkforce') : t('myWeeklyHours')}
           value={isManagement ? (stats?.totalEmployees || 0) : (stats?.weeklyHours || "0.0")}
           trend={12.5}
-          color="var(--accent)"
+          color="#568F87"
+          description={isManagement ? "Active personnel across all sectors" : "Total logged duration this period"}
         />
         <StatCard
-          icon={<Activity size={24} />}
+          icon={<Activity size={20} />}
           label={isManagement ? t('currentAttendance') : t('myEfficiency')}
           value={isManagement ? `${stats?.activeNow || 0}` : `${stats?.efficiency || 0}%`}
           trend={3.2}
-          color="var(--primary)"
+          color="#F5BABB"
+          description={isManagement ? "Employees currently on-site" : "Relative productivity score"}
         />
         <StatCard
-          icon={<MapPin size={24} />}
+          icon={<MapPin size={20} />}
           label={isManagement ? t('operationalSites') : t('activeSite')}
           value={isManagement ? (stats?.sites || 0) : (stats?.activeSite || user?.site?.name || 'Assigned Site')}
-          color="var(--accent)"
+          color="#568F87"
+          description={isManagement ? "Active geofenced locations" : "Your current base of operations"}
         />
         <StatCard
-          icon={<Clock size={24} />}
+          icon={<Clock size={20} />}
           label={isManagement ? t('avgShiftDuration') : t('totalEarnings')}
           value={isManagement ? `${stats?.avgShift || 0}h` : `${(stats?.earnings || 0).toLocaleString()} ₫`}
           trend={-1.2}
-          color="var(--primary)"
+          color="#F5BABB"
+          description={isManagement ? "Mean time per operational cycle" : "Estimated payout for active period"}
         />
       </section>
 
       {isManagement ? (
-        <div className="main-content-grid">
-          <div className="glass-card main-chart">
-            <div className="card-header">
-              <h3>{t('attendanceEfficiency')}</h3>
-              <div className="chart-legend">
-                <span className="dot"></span> {t('activeNow')} ({stats?.activeNow})
+      <div className="intelligence-main-grid">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass-card metrics-chart-card"
+        >
+          <div className="card-header-elite">
+            <div className="title-group">
+              <TrendingUp size={18} className="header-icon" />
+              <h3>Attendance Trajectory</h3>
+            </div>
+            <div className="chart-legend-elite">
+              <span className="legend-item"><span className="dot primary"></span> Active Capacity</span>
+            </div>
+          </div>
+          <div className="chart-container-elite">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#568F87" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#568F87" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
+                <Tooltip 
+                  contentStyle={{ background: '#064232', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                  itemStyle={{ color: '#F5BABB' }}
+                />
+                <Area type="monotone" dataKey="attendance" stroke="#568F87" fillOpacity={1} fill="url(#colorAttendance)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass-card site-performance-card"
+        >
+          <div className="card-header-elite">
+            <div className="title-group">
+              <Activity size={18} className="header-icon" />
+              <h3>Site Operations</h3>
+            </div>
+          </div>
+          <div className="site-ops-list">
+            {(stats?.sitePerformance || []).length > 0 ? (stats?.sitePerformance || []).map((site: any, idx: number) => (
+              <div key={idx} className="site-op-item">
+                <div className="site-op-header">
+                  <span className="site-op-name">{site.name}</span>
+                  <span className="site-op-status">{site.count} ACTIVE</span>
+                </div>
+                <div className="site-op-progress">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(site.count * 10, 100)}%` }}
+                    className="site-op-fill"
+                  ></motion.div>
+                </div>
+              </div>
+            )) : (
+              <div className="empty-state-elite">No active site data available</div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+      ) : (
+        <div className="intelligence-main-grid">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-card metrics-chart-card"
+          >
+            <div className="card-header-elite">
+              <div className="title-group">
+                <TrendingUp size={18} className="header-icon" />
+                <h3>Personal Progress</h3>
               </div>
             </div>
-            <div className="chart-h-400">
+            <div className="chart-container-elite">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                    <linearGradient id="colorPersonal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F5BABB" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#F5BABB" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" stroke="var(--text-secondary)" axisLine={false} tickLine={false} dy={10} />
-                  <YAxis stroke="var(--text-secondary)" axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
+                  <Tooltip 
+                    contentStyle={{ background: '#064232', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                    itemStyle={{ color: '#F5BABB' }}
                   />
-                  <Area type="monotone" dataKey="attendance" stroke="var(--primary)" fill="url(#chartGradient)" strokeWidth={3} />
+                  <Area type="monotone" dataKey="attendance" stroke="#F5BABB" fillOpacity={1} fill="url(#colorPersonal)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="glass-card side-list">
-            <div className="card-header">
-              <h3>{t('hubPerformance')}</h3>
-            </div>
-            <div className="performance-list">
-              {(stats?.sitePerformance || []).map((site: any, idx: number) => (
-                <div key={idx} className="performance-item">
-                  <div className="hub-info">
-                    <span className="hub-name">{site.name}</span>
-                    <div className="progress-bar-premium">
-                      <div className="progress-fill-premium" style={{ width: `${Math.min(site.count * 10, 100)}%` }}></div>
-                    </div>
-                  </div>
-                  <span className="hub-value">{site.count} Active</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="main-content-grid">
-          <div className="glass-card main-chart">
-            <div className="card-header">
-              <h3>{t('myWeeklyProgress')}</h3>
-            </div>
-            <div className="chart-h-400">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" stroke="var(--text-dim)" axisLine={false} tickLine={false} />
-                  <YAxis stroke="var(--text-dim)" axisLine={false} tickLine={false} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="attendance" stroke="var(--primary)" fill="rgba(245, 158, 11, 0.1)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className="glass-card side-list">
-            <div className="card-header">
-              <h3>Recent System Events</h3>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-card site-performance-card"
+          >
+            <div className="card-header-elite">
+              <div className="title-group">
+                <Activity size={18} className="header-icon" />
+                <h3>Recent Activity</h3>
+              </div>
             </div>
             <div className="notifications-list-premium">
               {(stats?.recentLogs || []).length > 0 ? (
@@ -232,10 +311,10 @@ const Dashboard = () => {
                   </div>
                 ))
               ) : (
-                <div className="empty-state-simple">No recent events logged.</div>
+                <div className="empty-state-elite">No recent activity detected</div>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 

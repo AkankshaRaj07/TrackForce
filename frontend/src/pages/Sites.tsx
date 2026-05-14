@@ -8,17 +8,51 @@ import {
   Edit2,
   Trash2,
   Users,
-  Loader2
+  Loader2,
+  Navigation
 } from 'lucide-react';
 import './Sites.css';
 
 import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
 import { fetchSites, createSite, deleteSite, updateSite } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import AddSiteModal from '../components/AddSiteModal';
 import Toast from '../components/Toast';
 import type { ToastType } from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
+
+// Fix for Leaflet marker icons
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const siteIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Helper component to recenter map
+const ChangeView = ({ center }: { center: [number, number] }) => {
+  const map = useMap();
+  map.setView(center);
+  return null;
+};
+
 
 const Sites = () => {
   const { user } = useAuth();
@@ -33,6 +67,8 @@ const Sites = () => {
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
   const [editingSite, setEditingSite] = useState<any>(null);
   const [toasts, setToasts] = useState<any[]>([]);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]);
+
 
   const addToast = (message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -50,17 +86,22 @@ const Sites = () => {
   const loadSites = async () => {
     try {
       const data = await fetchSites();
-      if (isManager) {
-        setSites(data);
-      } else {
-        setSites(data.filter((s: any) => s.id === user?.siteId));
+      let filteredSites = data;
+      if (!isManager) {
+        filteredSites = data.filter((s: any) => s.id === user?.siteId);
+      }
+      setSites(filteredSites);
+      
+      if (filteredSites.length > 0) {
+        setMapCenter([filteredSites[0].latitude || 20.5937, filteredSites[0].longitude || 78.9629]);
       }
     } catch (err) {
-      addToast('Failed to load operational hubs', 'error');
+      addToast('Failed to load operational sites', 'error');
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleDeleteSite = (siteId: string) => {
     setSiteToDelete(siteId);
@@ -71,7 +112,7 @@ const Sites = () => {
     if (!siteToDelete) return;
     try {
       await deleteSite(siteToDelete);
-      addToast('Hub deleted successfully', 'success');
+      addToast('Site deleted successfully', 'success');
       loadSites();
     } catch (err: any) {
       addToast(err.message, 'error');
@@ -85,10 +126,10 @@ const Sites = () => {
     try {
       if (editingSite) {
         await updateSite(editingSite.id, siteData);
-        addToast('Hub Configuration Updated', 'success');
+        addToast('Site Configuration Updated', 'success');
       } else {
         await createSite(siteData);
-        addToast('Hub Node Initialized Successfully!', 'success');
+        addToast('Site Node Initialized Successfully!', 'success');
       }
       loadSites();
     } catch (err: any) {
@@ -113,7 +154,7 @@ const Sites = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            Operational Hubs
+            Operational Sites
           </motion.h1>
           <p>Configure geo-fencing and manage site-specific workforce assignments.</p>
         </div>
@@ -148,9 +189,9 @@ const Sites = () => {
 
           <div className="sites-grid">
             {loading ? (
-              <div className="loading-state-hub">
-                <Loader2 className="spin" size={40} />
-                <p>Synchronizing Hub Data...</p>
+              <div className="loading-state-site">
+                <Loader2 className="spin" size={40} color="var(--primary)" />
+                <p>Synchronizing Site Data...</p>
               </div>
             ) : (
               sites.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map((site) => (
@@ -172,7 +213,7 @@ const Sites = () => {
                       <div className="site-actions-premium">
                         <button 
                           className="icon-btn-small edit" 
-                          title="Edit Hub"
+                          title="Edit Site"
                           onClick={() => {
                             setEditingSite(site);
                             setIsModalOpen(true);
@@ -182,7 +223,7 @@ const Sites = () => {
                         </button>
                         <button 
                           className="icon-btn-small delete" 
-                          title="Remove Hub"
+                          title="Remove Site"
                           onClick={() => handleDeleteSite(site.id)}
                         >
                           <Trash2 size={16} />
@@ -219,11 +260,12 @@ const Sites = () => {
 
                   <div className="site-card-footer">
                     {isManager && (
-                      <button className="btn-text" onClick={() => addToast('Opening hub analytics...', 'info')}>
-                        <MapPin size={14} /> View Hub Map
+                      <button className="btn-text" onClick={() => setMapCenter([site.latitude, site.longitude])}>
+                        <Navigation size={14} /> Center on Map
                       </button>
                     )}
                   </div>
+
                 </motion.div>
               ))
             )}
@@ -235,36 +277,44 @@ const Sites = () => {
             <div className="map-header">
               <h3>Geofence Visualization</h3>
               <div className="map-legend">
-                <span className="legend-item active">Active</span>
-                <span className="legend-item fence">Fence</span>
+                <span className="legend-item active">Operational</span>
+                <span className="legend-item fence">Geofence</span>
               </div>
             </div>
-            <div className="map-visual-mock">
-              <div className="visual-circle main-hub"></div>
-              <div className="visual-circle sub-hub-1"></div>
-              <div className="visual-circle sub-hub-2"></div>
-              <div className="map-grid-overlay"></div>
-              
-              {sites.slice(0, 3).map((site, idx) => (
-                <div 
-                  key={site.id} 
-                  className={`map-label h${idx + 1}`} 
-                  style={{ 
-                    top: idx === 0 ? '40%' : idx === 1 ? '20%' : '70%',
-                    left: idx === 0 ? '45%' : idx === 1 ? '70%' : '20%'
-                  }}
-                >
-                  {site.name}
-                </div>
-              ))}
+            <div className="map-visual-real">
+              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+                <ChangeView center={mapCenter} />
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; OpenStreetMap'
+                />
+                {sites.map(site => (
+                  site.latitude && (
+                    <div key={site.id}>
+                      <Marker position={[site.latitude, site.longitude]} icon={siteIcon}>
+                        <Popup>
+                          <strong>{site.name}</strong><br/>
+                          {site.location}
+                        </Popup>
+                      </Marker>
+                      <Circle 
+                        center={[site.latitude, site.longitude]}
+                        radius={site.geofenceRadius || 500}
+                        pathOptions={{ color: 'var(--primary)', fillColor: 'var(--primary)', fillOpacity: 0.1 }}
+                      />
+                    </div>
+                  )
+                ))}
+              </MapContainer>
             </div>
             <div className="map-footer-info">
               <Activity size={16} color="var(--primary)" />
-              <span>Real-time GPS data streaming active for all hubs</span>
+              <span>Real-time GPS data streaming active for all sites</span>
             </div>
           </div>
         </div>
       </div>
+
 
       <AddSiteModal 
         isOpen={isModalOpen} 
@@ -279,8 +329,8 @@ const Sites = () => {
 
       <ConfirmModal
         isOpen={isConfirmOpen}
-        title="Delete Operational Hub"
-        message="CRITICAL ACTION: Deleting this hub will unassign all employees from their current station. This action cannot be undone."
+        title="Delete Operational Site"
+        message="CRITICAL ACTION: Deleting this site will unassign all employees from their current station. This action cannot be undone."
         onConfirm={confirmDelete}
         onCancel={() => setIsConfirmOpen(false)}
         confirmText="Confirm Delete"

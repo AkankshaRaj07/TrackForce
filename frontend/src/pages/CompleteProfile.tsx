@@ -184,7 +184,7 @@ const CompleteProfile = () => {
 
                 <div className="form-section">
                   <div className="section-header"><User size={20} /><h3>Core Identity</h3></div>
-                  <div className="avatar-edit-hub">
+                  <div className="avatar-edit-site">
                     <div className="avatar-preview-lg">
                       {formData.avatar ? <img src={formData.avatar} alt="" /> : <User size={48} />}
                       <label htmlFor="avatar-upload" className="upload-badge"><Camera size={18} /></label>
@@ -249,7 +249,7 @@ const CompleteProfile = () => {
             {/* Biometric Enrollment Card */}
             <div className="glass-card form-section-card biometric-card">
               <div className="section-header"><ShieldCheck size={20} /><h3>Biometric Access</h3></div>
-              <div className="biometric-hub">
+              <div className="biometric-site">
                 <div className={`biometric-visual ${enrollmentComplete ? 'active' : ''} ${isEnrolling ? 'scanning' : ''}`}>
                   {isEnrolling ? (
                     <div className="scanner-simulation">

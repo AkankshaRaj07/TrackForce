@@ -32,7 +32,7 @@ const AddEmployee = () => {
   const isEditMode = !!id;
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [hubs, setHubs] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -69,8 +69,8 @@ const AddEmployee = () => {
   useEffect(() => {
     const initPage = async () => {
       try {
-        const [sites, allEmployees] = await Promise.all([fetchSites(), fetchEmployees()]);
-        setHubs(sites);
+        const [sitesData, allEmployees] = await Promise.all([fetchSites(), fetchEmployees()]);
+        setSites(sitesData);
         setEmployees(allEmployees);
 
         if (isEditMode) {
@@ -203,7 +203,7 @@ const AddEmployee = () => {
               <h3>Basic Information</h3>
             </div>
             
-            <div className="profile-top-hub" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+            <div className="profile-top-site" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Full Name <span className="required-star">*</span></label>
                 <input 
@@ -409,13 +409,7 @@ const AddEmployee = () => {
                   onChange={(val: string) => setFormData({...formData, siteId: val})}
                   options={[
                     { label: 'Select Project Site...', value: '' },
-                    ...hubs
-                      .filter(hub => {
-                        // Only show hub if it's not assigned to anyone else
-                        const assignedTo = employees.find(emp => emp.siteId === hub.id);
-                        return !assignedTo || (isEditMode && assignedTo.id === id);
-                      })
-                      .map(hub => ({ label: hub.name, value: hub.id }))
+                    ...sites.map(site => ({ label: site.name, value: site.id }))
                   ]}
                   placeholder="Select Project Site..."
                 />
@@ -426,7 +420,8 @@ const AddEmployee = () => {
           <div className="form-section">
             <div className="section-header">
               <CreditCard size={20} />
-              <h3>Passport / ID Details (Optional)</h3>
+              <h3>Passport and ID Details</h3>
+
 
             </div>
             <div className="form-grid-3">
@@ -461,7 +456,8 @@ const AddEmployee = () => {
           <div className="form-section">
             <div className="section-header">
               <FileText size={20} />
-              <h3>Employee Documents (Optional)</h3>
+              <h3>Employee Documents</h3>
+
 
             </div>
             <div className="file-upload-grid-compact" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>

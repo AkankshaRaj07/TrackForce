@@ -14,7 +14,7 @@ interface AddEmployeeModalProps {
 const AddEmployeeModal = ({ isOpen, onClose, onAdd }: AddEmployeeModalProps) => {
   const { isAdmin } = useAuth();
   const { t } = useTranslation();
-  const [hubs, setHubs] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     employeeId: '',
     firstName: '',
@@ -29,7 +29,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onAdd }: AddEmployeeModalProps) => 
 
   useEffect(() => {
     if (isOpen) {
-      fetchSites().then(setHubs).catch(console.error);
+      fetchSites().then(setSites).catch(console.error);
     }
   }, [isOpen]);
 
@@ -204,9 +204,9 @@ const AddEmployeeModal = ({ isOpen, onClose, onAdd }: AddEmployeeModalProps) => 
                     value={formData.siteId}
                     onChange={(e) => setFormData({...formData, siteId: e.target.value})}
                   >
-                    <option value="">Select a hub...</option>
-                    {hubs.map(hub => (
-                      <option key={hub.id} value={hub.id}>{hub.name}</option>
+                    <option value="">Select a site...</option>
+                    {sites.map(site => (
+                      <option key={site.id} value={site.id}>{site.name}</option>
                     ))}
                   </select>
                 </div>

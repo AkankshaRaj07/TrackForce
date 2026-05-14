@@ -63,10 +63,9 @@ export const Login = () => {
           className="auth-card-premium"
         >
           <div className="auth-header">
-            <div className="auth-logo">
-              <h2 style={{ fontSize: '24px', margin: 0 }}>TrackForce</h2>
-            </div>
+            <div className="logo-text" style={{ marginBottom: '16px' }}>TRACK<span>FORCE</span></div>
             <h2>{t('welcomeBack')}</h2>
+
             <p>{t('loginSubtext')}</p>
           </div>
 

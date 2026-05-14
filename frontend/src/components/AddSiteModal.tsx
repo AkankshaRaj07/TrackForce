@@ -1,7 +1,42 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Search, Navigation, CheckCircle2, Loader2, Sparkles, Shield } from 'lucide-react';
+import { X, MapPin, Search, Navigation, CheckCircle2, Loader2, Sparkles, Shield, MousePointer2 } from 'lucide-react';
+
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, Circle } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import './AddSiteModal.css';
+
+// Fix for Leaflet marker icons
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const siteIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Helper component to recenter map
+const MapRefresher = ({ center }: { center: [number, number] }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, 15);
+  }, [center, map]);
+  return null;
+};
+
 
 interface AddSiteModalProps {
   isOpen: boolean;
@@ -78,16 +113,63 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
   };
 
   const handleSelectSuggestion = (s: any) => {
+    const lat = parseFloat(s.lat);
+    const lon = parseFloat(s.lon);
     setFormData({
       ...formData,
       location: s.display_name,
-      latitude: parseFloat(s.lat),
-      longitude: parseFloat(s.lon)
+      latitude: lat,
+      longitude: lon
     });
     setSearchQuery(s.display_name);
     setSuggestions([]);
-    addToast('Location nodes synchronized', 'success');
+    addToast('Location synchronized. You can now adjust the pin on the map.', 'success');
   };
+
+  const handleMapAction = async (lat: number, lon: number) => {
+    setFormData(prev => ({ ...prev, latitude: lat, longitude: lon }));
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+      const data = await response.json();
+      if (data.display_name) {
+        setFormData(prev => ({ ...prev, location: data.display_name }));
+        setSearchQuery(data.display_name);
+      }
+    } catch (err) {
+      console.error("Reverse geocode failed", err);
+    }
+  };
+
+  const LocationMarker = () => {
+    useMapEvents({
+      click(e) {
+        handleMapAction(e.latlng.lat, e.latlng.lng);
+      },
+    });
+
+    return (
+      <>
+        <Marker 
+          position={[formData.latitude, formData.longitude]} 
+          icon={siteIcon}
+          draggable={true}
+          eventHandlers={{
+            dragend: (e: any) => {
+              const marker = e.target;
+              const position = marker.getLatLng();
+              handleMapAction(position.lat, position.lng);
+            },
+          }}
+        />
+        <Circle 
+          center={[formData.latitude, formData.longitude]}
+          radius={formData.geofenceRadius}
+          pathOptions={{ color: 'var(--error)', fillColor: 'var(--error)', fillOpacity: 0.1, dashArray: '5, 5' }}
+        />
+      </>
+    );
+  };
+
 
   const fetchCurrentLocation = () => {
     setIsLocating(true);
@@ -164,108 +246,164 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
             <div className="modal-header">
               <div className="title-with-sparkle">
                 <Sparkles className="sparkle-icon" size={20} />
-                <h3>{initialData ? 'Modify Hub Configuration' : 'Initialize Operational Hub'}</h3>
+                <h3>{initialData ? 'Modify Site Configuration' : 'Initialize Operational Site'}</h3>
               </div>
               <button type="button" onClick={onClose} className="icon-btn"><X size={20} /></button>
             </div>
 
-            <form onSubmit={handleSubmit} className="hub-form">
-              <div className="form-group">
-                <label>Hub Name</label>
-                <div className="input-with-icon">
-                  <Navigation size={18} />
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. London Gateway HQ"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSubmit} className="site-form-premium">
+              <div className="modal-body-scrollable">
+                <div className="modal-two-column-layout">
+                  {/* Left Column: Essential Details */}
+                  <div className="modal-column details-column">
+                    <div className="form-group">
+                      <label>Site Name</label>
+                      <div className="input-with-icon">
+                        <Navigation size={18} />
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. London Gateway HQ"
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        />
+                      </div>
+                    </div>
 
-              <div className="form-group" ref={searchRef}>
-                <label>Physical Address & Search</label>
-                <div className="location-input-group">
-                  <div className="input-with-icon flex-1">
-                    <Search size={18} />
-                    <input
-                      type="text"
-                      placeholder="Search address for geocoding..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {isSearching && <Loader2 className="spinner-icon" size={16} />}
-                  </div>
-                  <button 
-                    type="button" 
-                    className="icon-tool-btn" 
-                    onClick={fetchCurrentLocation}
-                    title="Use Current Location"
-                  >
-                    {isLocating ? <Loader2 className="spin" size={18} /> : <MapPin size={18} />}
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {suggestions.length > 0 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="suggestions-dropdown"
-                    >
-                      {suggestions.map((s, idx) => (
-                        <div 
-                          key={idx} 
-                          className="suggestion-item" 
-                          onClick={() => handleSelectSuggestion(s)}
-                        >
-                          <MapPin size={14} />
-                          <span>{s.display_name}</span>
+                    <div className="form-group" ref={searchRef}>
+                      <label>Physical Address & Search</label>
+                      <div className="location-input-group">
+                        <div className="input-with-icon flex-1">
+                          <Search size={18} />
+                          <input
+                            type="text"
+                            placeholder="Search address..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                          {isSearching && <Loader2 className="spinner-icon" size={16} />}
                         </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                        <button 
+                          type="button" 
+                          className="icon-tool-btn-small" 
+                          onClick={fetchCurrentLocation}
+                          title="Use Current Location"
+                        >
+                          {isLocating ? <Loader2 className="spin" size={18} /> : <MapPin size={18} />}
+                        </button>
+                      </div>
 
-              <div className="coord-preview-grid">
-                <div className="coord-box">
-                  <span>LATITUDE</span>
-                  <code>{formData.latitude.toFixed(6)}</code>
-                </div>
-                <div className="coord-box">
-                  <span>LONGITUDE</span>
-                  <code>{formData.longitude.toFixed(6)}</code>
-                </div>
-              </div>
+                      <AnimatePresence>
+                        {suggestions.length > 0 && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="suggestions-dropdown"
+                          >
+                            {suggestions.map((s, idx) => (
+                              <div 
+                                key={idx} 
+                                className="suggestion-item" 
+                                onClick={() => handleSelectSuggestion(s)}
+                              >
+                                <MapPin size={14} />
+                                <span>{s.display_name}</span>
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
-              <div className="geofence-info-box">
-                <Shield size={24} />
-                <div className="geofence-config">
-                  <h4>Security Perimeter (Meters)</h4>
-                  <div className="radius-input-wrapper">
-                    <input 
-                      type="number" 
-                      value={formData.geofenceRadius}
-                      onChange={(e) => setFormData({...formData, geofenceRadius: parseInt(e.target.value) || 0})}
-                      min="10"
-                      max="5000"
-                    />
-                    <span>meters</span>
+                    <div className="coord-preview-grid">
+                      <div className="coord-box">
+                        <span>LATITUDE</span>
+                        <code>{formData.latitude.toFixed(6)}</code>
+                      </div>
+                      <div className="coord-box">
+                        <span>LONGITUDE</span>
+                        <code>{formData.longitude.toFixed(6)}</code>
+                      </div>
+                    </div>
+
+                    <div className="geofence-control-center">
+                      <div className="geofence-header-premium">
+                        <div className="title">
+                          <Shield size={18} />
+                          <span>Security Perimeter</span>
+                        </div>
+                        <div className="value-badge">
+                          {formData.geofenceRadius} <span>meters</span>
+                        </div>
+                      </div>
+                      
+                      <div className="geofence-slider-wrapper">
+                        <input 
+                          type="range" 
+                          min="50" 
+                          max="2000" 
+                          step="50"
+                          value={formData.geofenceRadius}
+                          onChange={(e) => setFormData({...formData, geofenceRadius: parseInt(e.target.value)})}
+                          className="premium-slider"
+                        />
+                        <div className="slider-labels">
+                          <span>50m</span>
+                          <span>1km</span>
+                          <span>2km</span>
+                        </div>
+                      </div>
+
+                      <div className="geofence-input-sync">
+                        <input 
+                          type="number" 
+                          value={formData.geofenceRadius}
+                          onChange={(e) => setFormData({...formData, geofenceRadius: parseInt(e.target.value) || 0})}
+                          min="10"
+                          max="5000"
+                        />
+                        <span className="unit">MANUAL ENTRY (M)</span>
+                      </div>
+                      <p className="geofence-hint">Geofencing protocol will be strictly enforced within this radius.</p>
+                    </div>
+
                   </div>
-                  <p>Strict geofencing will be enforced within this radius.</p>
+
+                  {/* Right Column: Map Selection */}
+                  <div className="modal-column map-column">
+                    <div className="map-selection-section-compact">
+                      <div className="map-section-header">
+                        <div className="title">
+                          <MousePointer2 size={16} />
+                          <span>Pin Placement</span>
+                        </div>
+                        <span className="hint">Drag or click map</span>
+                      </div>
+                      <div className="modal-map-container-large">
+                        <MapContainer 
+                          center={[formData.latitude || 20.5937, formData.longitude || 78.9629]} 
+                          zoom={formData.latitude ? 15 : 4} 
+                          style={{ height: '360px', width: '100%', borderRadius: '16px' }}
+                        >
+                          <MapRefresher center={[formData.latitude || 20.5937, formData.longitude || 78.9629]} />
+                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                          <LocationMarker />
+                        </MapContainer>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer-sticky">
                 <button type="button" onClick={onClose} className="btn btn-ghost">Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={isSaving}>
                   {isSaving ? <Loader2 className="spin" size={18} /> : <CheckCircle2 size={18} />}
-                  {initialData ? 'Update Hub Node' : 'Create Hub Node'}
+                  {initialData ? 'Update Site Node' : 'Initialize Site Node'}
                 </button>
               </div>
             </form>
+
           </motion.div>
         </div>
       )}

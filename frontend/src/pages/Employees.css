@@ -1,17 +1,16 @@
 .employees-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--spacing-lg);
   max-width: 100%;
-  overflow-x: hidden;
+  animation: fadeIn 0.4s var(--ease-premium);
 }
 
-@media (max-width: 768px) {
-  .employees-container {
-    padding: 0;
-    gap: 16px;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
 
 .glass-card {
   max-width: 100%;
@@ -60,7 +59,7 @@
   }
 }
 
-/* Executive Toolbar Hub */
+/* Executive Toolbar Site */
 .employees-toolbar-premium {
   display: flex;
   justify-content: space-between;
@@ -86,10 +85,11 @@
   gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 8px 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  padding: 10px 20px;
+  border-radius: 16px;
+  transition: all var(--transition-fast);
 }
+
 
 .search-bar-premium:focus-within {
   border-color: var(--primary);
@@ -109,13 +109,13 @@
   outline: none;
 }
 
-.filter-hub-premium {
+.filter-site-premium {
   display: flex;
   gap: 12px;
 }
 
 @media (max-width: 768px) {
-  .filter-hub-premium {
+  .filter-site-premium {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
@@ -170,22 +170,30 @@
 }
 
 .employee-table th {
-  padding: 14px 20px;
+  padding: 16px 24px;
   text-align: left;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-main);
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+}
+
+
+.employee-table td {
+  padding: 16px 24px;
   border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: background 0.2s ease;
+}
+
+.employee-table tr:hover td {
   background: var(--surface-hover);
 }
 
-.employee-table td {
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
 
 .emp-identity {
   display: flex;
@@ -436,7 +444,7 @@
   .employee-table td:nth-of-type(2):before { content: "Login ID"; font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
   .employee-table td:nth-of-type(3):before { content: "Phone"; font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
   .employee-table td:nth-of-type(4):before { content: "Role"; font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
-  .employee-table td:nth-of-type(5):before { content: "Hub"; font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
+  .employee-table td:nth-of-type(5):before { content: "Site"; font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
 
   .employee-table td:nth-of-type(5) {
     border-bottom: none;

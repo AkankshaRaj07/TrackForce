@@ -69,8 +69,9 @@ const Landing = () => {
             viewport={{ once: true }}
             className="feature-card-premium w-33"
           >
-            <div className="icon-box" style={{ color: '#3b82f6' }}><MapPin size={24} /></div>
+            <div className="icon-box"><MapPin size={24} /></div>
             <h3>{t('geofenceShield')}</h3>
+
             <p>{t('geofenceSubtext')}</p>
             <div style={{ position: 'absolute', bottom: '-20px', right: '-20px', opacity: 0.05 }}>
               <Globe size={150} />
@@ -83,8 +84,9 @@ const Landing = () => {
             viewport={{ once: true }}
             className="feature-card-premium w-33"
           >
-            <div className="icon-box" style={{ color: '#10b981' }}><Zap size={24} /></div>
+            <div className="icon-box"><Zap size={24} /></div>
             <h3>{t('precisionPayroll')}</h3>
+
             <p>{t('precisionPayrollSubtext')}</p>
           </motion.div>
 
@@ -92,19 +94,20 @@ const Landing = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="feature-card-premium w-66"
-            style={{ background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(2, 6, 23, 0.6))' }}
+            className="feature-card-premium w-66 security-card-premium"
           >
-            <div className="icon-box" style={{ color: '#8b5cf6' }}><Lock size={24} /></div>
+            <div className="icon-box"><Lock size={24} /></div>
             <h3>Military-Grade Security</h3>
             <p style={{ maxWidth: '500px' }}>Our platform uses end-to-end encryption and decentralized biometric hashing to ensure that your workforce data remains private and tamper-proof.</p>
           </motion.div>
+
         </div>
       </section>
 
       <footer style={{ padding: '80px 5%', textAlign: 'center', borderTop: '1px solid var(--landing-border)' }}>
         <div className="logo-text" style={{ marginBottom: '20px' }}>TRACK<span>FORCE</span></div>
-        <p style={{ color: '#64748b', fontSize: '14px' }}>&copy; 2026 TrackForce Enterprise. All Rights Reserved.</p>
+        <p style={{ color: 'var(--text-dim)', fontSize: '14px' }}>&copy; 2026 TrackForce Enterprise. All Rights Reserved.</p>
+
       </footer>
     </div>
   );

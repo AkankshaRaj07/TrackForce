@@ -155,7 +155,7 @@ const EmployeeDetails = () => {
               <Briefcase size={16} /> {employee.designation || 'Operational Specialist'}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={16} /> {employee.site?.name || 'Unassigned Hub'}
+              <MapPin size={16} /> {employee.site?.name || 'Unassigned Site'}
             </span>
             <button 
               className="btn btn-primary btn-sm" 
@@ -214,7 +214,7 @@ const EmployeeDetails = () => {
             className="creative-overview-deck"
           >
             <div className="deck-col-main">
-              <div className="glass-tile-premium identity-tile">
+              <div className="glass-tile-premium identity-site-tile">
                 <div className="tile-header">
                   <User size={20} />
                   <h4>Personal Details</h4>
@@ -263,7 +263,7 @@ const EmployeeDetails = () => {
             </div>
 
             <div className="deck-col-side">
-              <div className="glass-tile-premium identity-hub-tile">
+              <div className="glass-tile-premium identity-site-tile">
                 <div className="tile-header">
                   <CreditCard size={20} />
                   <h4>Passport Intelligence</h4>

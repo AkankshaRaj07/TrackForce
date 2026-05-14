@@ -72,6 +72,7 @@ const storage = multer.diskStorage({
     if (file.fieldname === 'avatar') typeDir = 'profile_picture';
     else if (file.fieldname === 'cv') typeDir = 'cv';
     else if (file.fieldname === 'idDoc') typeDir = 'passport_id';
+    else if (file.fieldname === 'biometricProof') typeDir = 'attendance';
 
     const userDir = path.join(UPLOADS_DIR, folderId, typeDir);
 
@@ -161,6 +162,26 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+// Helper: Calculate rounded duration in minutes
+// Implements the "30-minute block" rule: any partial time < 30 mins is rounded down
+function calculateRoundedDuration(clockIn: Date, clockOut: Date, breaks: any[] = []) {
+  let durationMs = clockOut.getTime() - clockIn.getTime();
+  
+  // Subtract break durations
+  if (breaks && breaks.length > 0) {
+    breaks.forEach(b => {
+      if (b.startTime && b.endTime) {
+        durationMs -= (new Date(b.endTime).getTime() - new Date(b.startTime).getTime());
+      }
+    });
+  }
+
+  const durationMins = Math.max(0, durationMs / (1000 * 60));
+  // Round down to the nearest 30-minute block (e.g., 5:10 -> 5:00, 5:35 -> 5:30)
+  return Math.floor(durationMins / 30) * 30;
+}
+
 
 // --- Auth Routes ---
 
@@ -299,7 +320,7 @@ app.get('/api/employees/:id/full-profile', authenticateToken, async (req, res) =
     const rate = employee.hourlyRate || 0;
     employee.attendance.forEach(log => {
       if (log.clockIn && log.clockOut) {
-        const duration = (log.clockOut.getTime() - log.clockIn.getTime()) / (1000 * 60);
+        const duration = calculateRoundedDuration(new Date(log.clockIn), new Date(log.clockOut), log.breaks);
         totalMinutes += duration;
         let dayEarnings = (duration / 60) * rate;
         if (duration > 480) {
@@ -310,6 +331,7 @@ app.get('/api/employees/:id/full-profile', authenticateToken, async (req, res) =
         totalEarnings += dayEarnings;
       }
     });
+
     res.json({ employee: { ...employee, password: undefined }, attendance: employee.attendance, stats: { totalHours: (totalMinutes / 60).toFixed(1), totalEarnings: totalEarnings.toFixed(2), totalDays: employee.attendance.length } });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch full profile' });
@@ -367,29 +389,45 @@ app.post('/api/employees/:id/enroll', authenticateToken, async (req, res) => {
 
 // --- Attendance Routes ---
 
-app.post('/api/attendance/clock-in/:employeeId', authenticateToken, upload.single('biometricProof'), async (req: any, res: Response) => {
-  const { employeeId } = req.params;
+app.post('/api/attendance/clock-in/:id', authenticateToken, upload.single('biometricProof'), async (req: any, res: Response) => {
+  const { id } = req.params;
   const { latitude, longitude } = req.body;
   if (!latitude || !longitude) return res.status(400).json({ error: 'Location required' });
   try {
-    const employee = await prisma.employee.findUnique({ where: { employeeId }, include: { site: true } });
-    if (!employee || !employee.site) return res.status(400).json({ error: 'Employee/Site not found' });
+    const employee = await prisma.employee.findUnique({ where: { id }, include: { site: true } });
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    if (!employee.site) return res.status(400).json({ error: 'No operational site assigned to your profile. Please contact admin.' });
+    
     const distance = getDistance(parseFloat(latitude), parseFloat(longitude), employee.site.latitude || 0, employee.site.longitude || 0);
     const radius = employee.site.geofenceRadius || 500;
     if (distance > radius && req.user.role === 'EMPLOYEE') {
       await prisma.securityAlert.create({ data: { type: 'GEOFENCE_VIOLATION', message: `${employee.firstName} clocked in from ${Math.round(distance)}m away.`, severity: 'MEDIUM', employeeId: employee.id, siteId: employee.siteId } });
-      return res.status(403).json({ error: `Out of bounds (${Math.round(distance)}m away)` });
+      return res.status(403).json({ error: `Out of bounds (${Math.round(distance)}m away from ${employee.site.name})` });
     }
-    const attendance = await prisma.attendance.create({ data: { employeeId: employee.id, clockInLat: parseFloat(latitude), clockInLong: parseFloat(longitude), status: 'PENDING' } });
+    let biometricProof = null;
+    if (req.file) {
+      biometricProof = `/uploads/${employee.employeeId}/attendance/${req.file.filename}`;
+    }
+    
+    const attendance = await prisma.attendance.create({ 
+      data: { 
+        employeeId: employee.id, 
+        siteId: employee.siteId, 
+        clockInLat: parseFloat(latitude), 
+        clockInLong: parseFloat(longitude), 
+        status: 'PENDING',
+        biometricProof
+      } 
+    });
     res.json(attendance);
   } catch (error) {
     res.status(500).json({ error: 'Clock-in failed' });
   }
 });
 
-app.post('/api/attendance/clock-out/:employeeId', authenticateToken, async (req, res) => {
+app.post('/api/attendance/clock-out/:id', authenticateToken, async (req, res) => {
   try {
-    const employee = await prisma.employee.findUnique({ where: { employeeId: req.params.employeeId } });
+    const employee = await prisma.employee.findUnique({ where: { id: req.params.id } });
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
     const active = await prisma.attendance.findFirst({ where: { employeeId: employee.id, clockOut: null }, orderBy: { createdAt: 'desc' } });
     if (!active) return res.status(400).json({ error: 'No active clock-in' });
@@ -400,11 +438,11 @@ app.post('/api/attendance/clock-out/:employeeId', authenticateToken, async (req,
   }
 });
 
-app.get('/api/attendance/today/:employeeId', authenticateToken, async (req, res) => {
+app.get('/api/attendance/today/:id', authenticateToken, async (req, res) => {
   try {
-    const employee = await prisma.employee.findUnique({ where: { employeeId: req.params.employeeId } });
+    const employee = await prisma.employee.findUnique({ where: { id: req.params.id } });
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
-    const logs = await prisma.attendance.findMany({ where: { employeeId: employee.id, date: { gte: new Date(new Date().setHours(0,0,0,0)) } }, orderBy: { createdAt: 'desc' } });
+    const logs = await prisma.attendance.findMany({ where: { employeeId: employee.id, date: { gte: new Date(new Date().setHours(0,0,0,0)) } }, orderBy: { createdAt: 'desc' }, include: { breaks: true } });
     res.json(logs);
   } catch (error) {
     res.status(500).json({ error: 'Fetch failed' });
@@ -451,9 +489,9 @@ app.post('/api/attendance/manual', authenticateToken, requireManagement, async (
 
 // --- Break Routes ---
 
-app.post('/api/attendance/break-start/:employeeId', authenticateToken, async (req, res) => {
+app.post('/api/attendance/break-start/:id', authenticateToken, async (req, res) => {
   try {
-    const employee = await prisma.employee.findUnique({ where: { employeeId: req.params.employeeId } });
+    const employee = await prisma.employee.findUnique({ where: { id: req.params.id } });
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
     const active = await prisma.attendance.findFirst({ where: { employeeId: employee.id, clockOut: null }, orderBy: { createdAt: 'desc' } });
     if (!active) return res.status(400).json({ error: 'Not clocked in' });
@@ -464,9 +502,9 @@ app.post('/api/attendance/break-start/:employeeId', authenticateToken, async (re
   }
 });
 
-app.post('/api/attendance/break-end/:employeeId', authenticateToken, async (req, res) => {
+app.post('/api/attendance/break-end/:id', authenticateToken, async (req, res) => {
   try {
-    const employee = await prisma.employee.findUnique({ where: { employeeId: req.params.employeeId } });
+    const employee = await prisma.employee.findUnique({ where: { id: req.params.id } });
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
     const active = await prisma.attendance.findFirst({ where: { employeeId: employee.id, clockOut: null }, include: { breaks: { where: { endTime: null } } } });
     if (!active?.breaks[0]) return res.status(400).json({ error: 'No active break' });
@@ -482,14 +520,16 @@ app.post('/api/attendance/break-end/:employeeId', authenticateToken, async (req,
 app.get('/api/payroll', authenticateToken, async (req: any, res: Response) => {
   try {
     const isManagement = req.user.role !== 'EMPLOYEE';
-    const employees = await prisma.employee.findMany({ where: isManagement ? {} : { id: req.user.id }, include: { attendance: { where: { clockOut: { not: null } } } } });
+    const employees = await prisma.employee.findMany({ where: isManagement ? {} : { id: req.user.id }, include: { attendance: { where: { clockOut: { not: null } }, include: { breaks: true } } } });
+
     const data = employees.map(emp => {
       let totalMins = 0, otMins = 0, rate = emp.hourlyRate || 25;
       emp.attendance.forEach(log => {
-        const d = (log.clockOut!.getTime() - log.clockIn.getTime()) / 60000;
+        const d = calculateRoundedDuration(new Date(log.clockIn), new Date(log.clockOut!), log.breaks);
         totalMins += d;
         if (d > 480) otMins += (d - 480);
       });
+
       const th = totalMins / 60, oh = otMins / 60, rh = th - oh;
       let earn = rh * rate;
       earn += (emp.overtimeType === 'MULTIPLIER' ? oh * rate * (emp.overtimeValue || 1.5) : oh * (emp.overtimeValue || 20));
@@ -513,13 +553,15 @@ app.post('/api/payroll/process', authenticateToken, requireManagement, async (re
 app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response) => {
   try {
     const isMgmt = req.user.role !== 'EMPLOYEE';
-    const logs = await prisma.attendance.findMany({ where: { clockOut: { not: null }, ...(isMgmt ? {} : { employeeId: req.user.id }) }, include: { employee: true } });
+    const logs = await prisma.attendance.findMany({ where: { clockOut: { not: null }, ...(isMgmt ? {} : { employeeId: req.user.id }) }, include: { employee: true, breaks: true } });
+
     let cost = 0, hours = 0;
     logs.forEach(l => {
-      const h = (l.clockOut!.getTime() - l.clockIn.getTime()) / 3600000;
+      const h = calculateRoundedDuration(new Date(l.clockIn), new Date(l.clockOut!), l.breaks) / 60;
       hours += h;
       cost += (h * (l.employee?.hourlyRate || 25));
     });
+
     res.json({ totalPayout: cost.toFixed(2), totalHours: hours.toFixed(1), activeRecipients: isMgmt ? logs.length : 1 });
   } catch (error) {
     res.status(500).json({ error: 'Stats failed' });
@@ -530,13 +572,101 @@ app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response)
 
 app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
   try {
-    const employees = await prisma.employee.count();
-    const active = await prisma.attendance.count({ where: { clockOut: null } });
-    const sites = await prisma.site.count();
-    const alerts = await prisma.securityAlert.count();
-    res.json({ totalEmployees: employees, activeNow: active, sites, violations: alerts });
+    const isMgmt = req.user.role !== 'EMPLOYEE';
+    
+    // 1. Core Counts
+    const totalEmployees = await prisma.employee.count();
+    const activeNow = await prisma.attendance.count({ where: { clockOut: null } });
+    const totalSites = await prisma.site.count();
+    
+    // 2. Site Performance (Active employees per site)
+    const sitePerformanceRaw = await prisma.attendance.groupBy({
+      by: ['siteId'],
+      where: { clockOut: null },
+      _count: { id: true }
+    });
+
+    const sitePerformance = await Promise.all(sitePerformanceRaw.map(async (sp) => {
+      const site = await prisma.site.findUnique({ where: { id: sp.siteId || '' } });
+      return {
+        name: site?.name || 'Mobile Operations',
+        count: sp._count.id
+      };
+    }));
+
+    // 3. Weekly Trend (Last 7 days)
+    const trend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const start = new Date(date.setHours(0,0,0,0));
+      const end = new Date(date.setHours(23,59,59,999));
+      
+      const count = await prisma.attendance.count({
+        where: {
+          date: { gte: start, lte: end },
+          ...(isMgmt ? {} : { employeeId: req.user.id })
+        }
+      });
+      
+      trend.push({
+        name: start.toLocaleDateString('en-US', { weekday: 'short' }),
+        attendance: count
+      });
+    }
+
+    // 4. Recent Activity/Logs
+    const recentLogs = [];
+    if (isMgmt) {
+      const alerts = await prisma.securityAlert.findMany({ take: 5, orderBy: { timestamp: 'desc' } });
+      alerts.forEach(a => {
+        recentLogs.push({
+          type: 'ALERT',
+          title: a.type,
+          message: a.message,
+          time: a.timestamp
+        });
+      });
+    } else {
+      const personalLogs = await prisma.attendance.findMany({
+        where: { employeeId: req.user.id },
+        take: 5,
+        orderBy: { createdAt: 'desc' }
+      });
+      personalLogs.forEach(l => {
+        recentLogs.push({
+          type: 'LOG',
+          title: l.clockOut ? 'Shift Completed' : 'Session Active',
+          message: `Check-in recorded at ${new Date(l.clockIn).toLocaleTimeString()}`,
+          time: l.createdAt
+        });
+      });
+    }
+
+    // 5. Employee specific metrics
+    let employeeMetrics = {};
+    if (!isMgmt) {
+      const attendance = await prisma.attendance.findMany({ where: { employeeId: req.user.id } });
+      const weeklyHours = attendance.reduce((acc, curr) => acc + (curr.clockOut ? (new Date(curr.clockOut).getTime() - new Date(curr.clockIn).getTime()) / (1000 * 60 * 60) : 0), 0);
+      employeeMetrics = {
+        weeklyHours: weeklyHours.toFixed(1),
+        efficiency: 98, // Simulated
+        earnings: Math.round(weeklyHours * 250000) // Simulated 250k/hr
+      };
+    }
+
+    res.json({
+      totalEmployees,
+      activeNow,
+      sites: totalSites,
+      sitePerformance,
+      weeklyTrend: trend,
+      recentLogs,
+      ...employeeMetrics
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Stats failed' });
+    console.error("Stats aggregation error:", error);
+    res.status(500).json({ error: 'Stats intelligence failure' });
   }
 });
 

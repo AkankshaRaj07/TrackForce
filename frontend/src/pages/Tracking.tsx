@@ -109,7 +109,7 @@ const Tracking = () => {
                   <Marker position={[site.latitude || 0, site.longitude || 0]} icon={siteIcon}>
                     <Popup>
                       <div className="map-popup">
-                        <strong>{t('hub')}: {site.name}</strong><br/>
+                        <strong>{t('site')}: {site.name}</strong><br/>
                         {site.location}
                       </div>
                     </Popup>

@@ -537,7 +537,7 @@ const Attendance = () => {
               </div>
 
               <div className="verification-info-premium">
-                <div className="v-item"><MapPin size={14} /> {user?.site?.name || 'Assigned Hub'}</div>
+                <div className="v-item"><MapPin size={14} /> {user?.site?.name || 'Assigned Site'}</div>
                 <div className="v-item">Biometric Secure</div>
               </div>
 
@@ -590,14 +590,14 @@ const Attendance = () => {
                 </div>
 
                 <div className="form-group-premium" style={{ marginBottom: '1.2rem' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Operational Site Hub</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Operational Site</label>
                   <select 
                     value={manualData.siteId} 
                     onChange={e => setManualData({...manualData, siteId: e.target.value})}
                     required
                     style={{ width: '100%', padding: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-main)' }}
                   >
-                    <option value="" style={{ background: 'var(--surface)' }}>Choose Hub...</option>
+                    <option value="" style={{ background: 'var(--surface)' }}>Choose Site...</option>
                     {sites.map(s => (
                       <option key={s.id} value={s.id} style={{ background: 'var(--surface)' }}>{s.name}</option>
                     ))}
@@ -714,15 +714,18 @@ const Attendance = () => {
               onClick={e => e.stopPropagation()}
               style={{ maxWidth: '400px' }}
             >
-              <div className="modal-icon-header warning" style={{ textAlign: 'center', padding: '2rem 0', color: '#ef4444' }}>
+              <div className="modal-icon-header warning" style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--error)' }}>
+
                 <Trash2 size={64} />
               </div>
               <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>Confirm Data Purge</h3>
-              <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', marginBottom: '2rem', lineHeight: '1.6' }}>
+              <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', marginBottom: '2rem', lineHeight: '1.6' }}>
+
                 Are you sure you want to permanently delete this attendance record? This action will also remove all associated break data and cannot be undone.
               </p>
               <div className="modal-actions-premium" style={{ flexDirection: 'column', gap: '0.5rem' }}>
-                <button className="btn btn-primary btn-block btn-lg" style={{ backgroundColor: '#ef4444' }} onClick={confirmPurge}>
+                <button className="btn btn-primary btn-block btn-lg" style={{ backgroundColor: 'var(--error)' }} onClick={confirmPurge}>
+
                   Purge Record Permanently
                 </button>
                 <button className="btn btn-ghost btn-block" onClick={() => setShowPurgeConfirm(false)}>
@@ -807,7 +810,8 @@ const Attendance = () => {
                     <button 
                       className="btn btn-danger btn-lg btn-block"
                       onClick={handleClockOut}
-                      style={{ backgroundColor: '#ef4444', color: 'white', border: 'none' }}
+                      style={{ backgroundColor: 'var(--error)', color: 'white', border: 'none' }}
+
                     >
                       {t('clockOut')}
                     </button>
@@ -845,6 +849,15 @@ const Attendance = () => {
                     <span className={`m-status ${log.clockOut ? 'approved' : 'pending'}`}>
                       {log.clockOut ? t('completed') : t('onSite')}
                     </span>
+                    {log.biometricProof && (
+                      <button 
+                        className="btn-proof-mini" 
+                        onClick={() => setSelectedProof(log.biometricProof.startsWith('http') ? log.biometricProof : `${API_URL}${log.biometricProof}`)}
+                        title="View Identification Proof"
+                      >
+                        <Camera size={14} />
+                      </button>
+                    )}
                   </div>
                 )) : (
                   <div className="no-logs">{t('noLogs')}</div>
@@ -903,7 +916,8 @@ const Attendance = () => {
             <button 
               className={`btn ${isClockedIn ? 'btn-danger' : 'btn-primary'} btn-block`}
               onClick={isClockedIn ? handleClockOut : (isManagement ? handleDirectClockIn : () => setShowScanner(true))}
-              style={isClockedIn ? { backgroundColor: '#ef4444', color: 'white', border: 'none' } : {}}
+              style={isClockedIn ? { backgroundColor: 'var(--error)', color: 'white', border: 'none' } : {}}
+
             >
               {isClockedIn ? <X size={16} /> : <Clock size={16} />}
               {isClockedIn ? t('clockOut') : t('clockIn')}
@@ -1036,7 +1050,8 @@ const Attendance = () => {
                             <button className="status-btn reject" onClick={() => handleStatusUpdate(log.id, 'REJECTED')} title="Reject"><X size={14} /></button>
                           </>
                         )}
-                        <button className="status-btn delete" onClick={() => handleDeleteLog(log.id)} title="Purge Log" style={{ color: '#ef4444' }}>
+                        <button className="status-btn delete" onClick={() => handleDeleteLog(log.id)} title="Purge Log" style={{ color: 'var(--error)' }}>
+
                           <Trash2 size={14} />
                         </button>
                       </div>
