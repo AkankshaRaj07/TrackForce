@@ -32,7 +32,8 @@
   background: var(--surface);
   border-right: 1px solid var(--border);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 10px 0; /* Vertical breathing room */
+  padding: 10px 0;
+  /* Vertical breathing room */
 }
 
 @media (max-width: 1024px) {
@@ -55,7 +56,8 @@
   height: 100vh;
   min-width: 0;
   overflow: hidden;
-  margin-left: 280px; /* Synchronized with widened sidebar */
+  margin-left: 280px;
+  /* Synchronized with widened sidebar */
   background: var(--bg);
 }
 
@@ -67,9 +69,11 @@
 
 .content-area {
   flex: 1;
-  padding: 40px 48px; /* High-fidelity horizontal and vertical breathing room */
+  padding: 40px 48px;
+  /* High-fidelity horizontal and vertical breathing room */
   overflow-y: auto;
-  max-width: 1600px; /* Prevent over-stretching on ultra-wide displays */
+  max-width: 1600px;
+  /* Prevent over-stretching on ultra-wide displays */
 }
 
 @media (max-width: 768px) {

@@ -4,15 +4,19 @@
 
 :root {
   /* Color Hunt Palette: eeeeee 6fcf97 2fa084 1f6f5f */
-  --primary: #2fa084; /* Deep Teal-Green */
+  --primary: #2fa084;
+  /* Deep Teal-Green */
   --primary-hover: #268770;
   --primary-glow: rgba(47, 160, 132, 0.3);
-  --accent: #6fcf97; /* Soft Emerald */
-  --bg: #eeeeee; /* Light Grey Canvas */
+  --accent: #6fcf97;
+  /* Soft Emerald */
+  --bg: #eeeeee;
+  /* Light Grey Canvas */
   --surface: #ffffff;
   --surface-hover: rgba(111, 207, 151, 0.1);
   --surface-bright: #ffffff;
-  --text-main: #1f6f5f; /* Forest Green Text */
+  --text-main: #1f6f5f;
+  /* Forest Green Text */
   --text-primary: #154a40;
   --text-secondary: rgba(31, 111, 95, 0.7);
   --text-tertiary: rgba(31, 111, 95, 0.5);
@@ -27,26 +31,28 @@
   --glass-blur: blur(20px);
   --ease-premium: cubic-bezier(0.4, 0, 0.2, 1);
   --mesh: radial-gradient(at 0% 0%, rgba(111, 207, 151, 0.15) 0%, transparent 50%),
-          radial-gradient(at 100% 100%, rgba(47, 160, 132, 0.1) 0%, transparent 50%),
-          radial-gradient(at 50% 50%, #eeeeee 0%, #dcdcdc 100%);
-  
+    radial-gradient(at 100% 100%, rgba(47, 160, 132, 0.1) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, #eeeeee 0%, #dcdcdc 100%);
+
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-full: 9999px;
-  
+
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
-  
+
   --transition-fast: 0.2s ease;
   --transition-slow: 0.4s ease;
 }
 
 [data-theme='dark'] {
-  --bg: #0f172a; /* Solid Deep Slate */
-  --surface: #1e293b; /* Solid Navy Surface */
+  --bg: #0f172a;
+  /* Solid Deep Slate */
+  --surface: #1e293b;
+  /* Solid Navy Surface */
   --surface-hover: rgba(111, 207, 151, 0.1);
   --surface-bright: #1e293b;
   --border: rgba(255, 255, 255, 0.08);
@@ -61,12 +67,13 @@
   --text-tertiary: rgba(238, 238, 238, 0.5);
   --text-dim: #94a3b8;
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 24px 48px rgba(0,0,0,0.4);
+  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.4);
   --mesh: radial-gradient(at 0% 0%, rgba(111, 207, 151, 0.1) 0%, transparent 50%),
-          radial-gradient(at 100% 100%, rgba(31, 111, 95, 0.1) 0%, transparent 50%);
+    radial-gradient(at 100% 100%, rgba(31, 111, 95, 0.1) 0%, transparent 50%);
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-family: 'Outfit', sans-serif;
@@ -137,7 +144,10 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--text-primary);
@@ -187,6 +197,7 @@ h1, h2, h3, h4 {
   .mobile-only {
     display: block;
   }
+
   .desktop-only {
     display: none;
   }

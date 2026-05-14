@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Lock, ArrowRight, AlertCircle, Languages } from 'lucide-react';
+import { User, Lock, ArrowRight, AlertCircle, Languages, Eye, EyeOff } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -13,6 +13,7 @@ import './Auth.css';
 export const Login = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -96,12 +97,20 @@ export const Login = () => {
               <div className="input-wrapper-premium">
                 <Lock size={20} />
                 <input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'} 
                   placeholder="••••••••" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 

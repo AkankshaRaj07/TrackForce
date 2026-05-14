@@ -1,17 +1,17 @@
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  MapPin, 
-  Clock, 
+import {
+  Users,
+  MapPin,
+  Clock,
   TrendingUp,
   Activity,
   CheckCircle2
 } from 'lucide-react';
-import { 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   AreaChart,
   Area
@@ -26,22 +26,23 @@ import { fetchStats } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
 const StatCard = ({ icon, label, value, trend, color }: any) => (
-  <motion.div 
+  <motion.div
     whileHover={{ scale: 1.02 }}
     className="glass-card stat-card-premium"
     style={{ '--accent-color': color } as any}
   >
-    <div className="stat-card-glow"></div>
-    <div className="stat-icon-wrapper">
-      {icon}
+    <div className="stat-card-top">
+      <div className="stat-icon-wrapper">
+        {icon}
+      </div>
+      <h2 className="stat-value">{value}</h2>
     </div>
     <div className="stat-info">
       <span className="stat-label">{label}</span>
-      <h2 className="stat-value">{value}</h2>
       {trend && (
         <span className={`stat-trend ${trend > 0 ? 'up' : 'down'}`}>
           {trend > 0 ? <TrendingUp size={14} /> : <TrendingUp size={14} style={{ transform: 'rotate(90deg)' }} />}
-          {trend}% vs last month
+          {trend}%
         </span>
       )}
     </div>
@@ -53,7 +54,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     fetchStats().then(setStats).catch(console.error);
   }, []);
@@ -76,10 +77,10 @@ const Dashboard = () => {
             {isAdmin ? t('workforceIntelligence') : isManager ? t('hubOperations') : t('myPerformance')}
           </h1>
           <p>
-            {isAdmin 
-              ? t('adminDashboardSubtext') 
-              : isManager 
-                ? t('managerDashboardSubtext') 
+            {isAdmin
+              ? t('adminDashboardSubtext')
+              : isManager
+                ? t('managerDashboardSubtext')
                 : t('employeeDashboardSubtext')}
           </p>
         </div>
@@ -90,9 +91,9 @@ const Dashboard = () => {
           </button>
         </div>
       </header>
-      
+
       {!isManagement && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className={`security-status-banner ${user?.isBiometricEnrolled ? 'verified' : 'unverified'}`}
@@ -101,8 +102,8 @@ const Dashboard = () => {
             <CheckCircle2 size={18} className="shield-icon" />
             <div>
               <strong>{user?.isBiometricEnrolled ? "Biometric Security Active" : "Action Required: Biometric Enrollment"}</strong>
-              <p>{user?.isBiometricEnrolled 
-                ? "Your identity is protected by facial recognition protocols." 
+              <p>{user?.isBiometricEnrolled
+                ? "Your identity is protected by facial recognition protocols."
                 : "Complete enrollment in the Attendance section to secure your account."}
               </p>
             </div>
@@ -116,32 +117,32 @@ const Dashboard = () => {
       )}
 
       <section className="stats-grid-premium">
-        <StatCard 
-          icon={<Users size={24} />} 
-          label={isManagement ? t('totalWorkforce') : t('myWeeklyHours')} 
-          value={isManagement ? (stats?.totalEmployees || 0) : (stats?.weeklyHours || "0.0")} 
-          trend={12.5} 
-          color="var(--accent)" 
+        <StatCard
+          icon={<Users size={24} />}
+          label={isManagement ? t('totalWorkforce') : t('myWeeklyHours')}
+          value={isManagement ? (stats?.totalEmployees || 0) : (stats?.weeklyHours || "0.0")}
+          trend={12.5}
+          color="var(--accent)"
         />
-        <StatCard 
-          icon={<Activity size={24} />} 
-          label={isManagement ? t('currentAttendance') : t('myEfficiency')} 
-          value={isManagement ? `${stats?.activeNow || 0}` : `${stats?.efficiency || 0}%`} 
-          trend={3.2} 
-          color="var(--primary)" 
+        <StatCard
+          icon={<Activity size={24} />}
+          label={isManagement ? t('currentAttendance') : t('myEfficiency')}
+          value={isManagement ? `${stats?.activeNow || 0}` : `${stats?.efficiency || 0}%`}
+          trend={3.2}
+          color="var(--primary)"
         />
-        <StatCard 
-          icon={<MapPin size={24} />} 
-          label={isManagement ? t('operationalSites') : t('activeSite')} 
-          value={isManagement ? (stats?.sites || 0) : (stats?.activeSite || user?.site?.name || 'Assigned Site')} 
-          color="var(--accent)" 
+        <StatCard
+          icon={<MapPin size={24} />}
+          label={isManagement ? t('operationalSites') : t('activeSite')}
+          value={isManagement ? (stats?.sites || 0) : (stats?.activeSite || user?.site?.name || 'Assigned Site')}
+          color="var(--accent)"
         />
-        <StatCard 
-          icon={<Clock size={24} />} 
-          label={isManagement ? t('avgShiftDuration') : t('totalEarnings')} 
-          value={isManagement ? `${stats?.avgShift || 0}h` : `${(stats?.earnings || 0).toLocaleString()} ₫`} 
-          trend={-1.2} 
-          color="var(--primary)" 
+        <StatCard
+          icon={<Clock size={24} />}
+          label={isManagement ? t('avgShiftDuration') : t('totalEarnings')}
+          value={isManagement ? `${stats?.avgShift || 0}h` : `${(stats?.earnings || 0).toLocaleString()} ₫`}
+          trend={-1.2}
+          color="var(--primary)"
         />
       </section>
 
@@ -159,14 +160,14 @@ const Dashboard = () => {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" stroke="var(--text-secondary)" axisLine={false} tickLine={false} dy={10} />
                   <YAxis stroke="var(--text-secondary)" axisLine={false} tickLine={false} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}
                   />
                   <Area type="monotone" dataKey="attendance" stroke="var(--primary)" fill="url(#chartGradient)" strokeWidth={3} />
