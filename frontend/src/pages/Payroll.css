@@ -225,3 +225,39 @@
   color: var(--primary);
 }
 
+.action-row-mini {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-btn {
+  background: var(--surface-bright);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-premium);
+}
+
+.icon-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.icon-btn.highlight {
+  color: var(--primary);
+  border-color: var(--primary-glow);
+  background: var(--primary-glow);
+}
+
+.icon-btn.highlight:hover {
+  background: var(--primary);
+  color: #000;
+}
+

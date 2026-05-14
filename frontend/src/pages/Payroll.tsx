@@ -11,12 +11,14 @@ import {
   Search,
   CheckCircle2,
   RefreshCw,
+  Printer
 } from 'lucide-react';
 import { fetchPayroll, processPayroll, fetchPayrollStats } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 import type { ToastType } from '../components/Toast';
+import PayslipModal from '../components/PayslipModal';
 import './Payroll.css';
 
 const StatCard = ({ icon, label, value, color }: any) => (
@@ -46,6 +48,8 @@ const Payroll = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toasts, setToasts] = useState<any[]>([]);
+  const [isPayslipOpen, setIsPayslipOpen] = useState(false);
+  const [selectedPayslip, setSelectedPayslip] = useState<any>(null);
 
   const addToast = (message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -208,15 +212,33 @@ const Payroll = () => {
                   </span>
                 </td>
                 <td>
-                  <button className="icon-btn" title="View Details">
-                    <FileText size={18} />
-                  </button>
+                  <div className="action-row-mini">
+                    <button className="icon-btn" title="View Details">
+                      <FileText size={16} />
+                    </button>
+                    <button 
+                      className="icon-btn highlight" 
+                      title="Generate Payslip"
+                      onClick={() => {
+                        setSelectedPayslip(item);
+                        setIsPayslipOpen(true);
+                      }}
+                    >
+                      <Printer size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <PayslipModal 
+        isOpen={isPayslipOpen}
+        onClose={() => setIsPayslipOpen(false)}
+        data={selectedPayslip}
+      />
     </div>
   );
 };

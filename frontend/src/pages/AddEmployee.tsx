@@ -56,7 +56,11 @@ const AddEmployee = () => {
     passportIssue: '',
     dob: '',
     cvPath: null as string | null,
-    idDocPath: null as string | null
+    idDocPath: null as string | null,
+    bankName: '',
+    accountNumber: '',
+    accountHolderName: '',
+    swiftCode: ''
   });
   
   const [files, setFiles] = useState({
@@ -91,7 +95,11 @@ const AddEmployee = () => {
             passportIssue: emp.passportIssue ? new Date(emp.passportIssue).toISOString().split('T')[0] : '',
             dob: emp.dob ? new Date(emp.dob).toISOString().split('T')[0] : '',
             cvPath: emp.cvPath ? `${API_URL}${emp.cvPath}` : null,
-            idDocPath: emp.idDocPath ? `${API_URL}${emp.idDocPath}` : null
+            idDocPath: emp.idDocPath ? `${API_URL}${emp.idDocPath}` : null,
+            bankName: emp.bankName || '',
+            accountNumber: emp.accountNumber || '',
+            accountHolderName: emp.accountHolderName || '',
+            swiftCode: emp.swiftCode || ''
           });
         }
       } catch (err) {
@@ -419,9 +427,52 @@ const AddEmployee = () => {
           <div className="form-section">
             <div className="section-header">
               <CreditCard size={20} />
+              <h3>Bank Account Details</h3>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Bank Name</label>
+                <input 
+                  type="text" 
+                  value={formData.bankName}
+                  onChange={(e) => setFormData({...formData, bankName: e.target.value})}
+                  placeholder="e.g. Vietcombank" 
+                />
+              </div>
+              <div className="form-group">
+                <label>Account Number</label>
+                <input 
+                  type="text" 
+                  value={formData.accountNumber}
+                  onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
+                  placeholder="0123456789" 
+                />
+              </div>
+              <div className="form-group">
+                <label>Account Holder Name</label>
+                <input 
+                  type="text" 
+                  value={formData.accountHolderName}
+                  onChange={(e) => setFormData({...formData, accountHolderName: e.target.value})}
+                  placeholder="FULL NAME AS PER BANK" 
+                />
+              </div>
+              <div className="form-group">
+                <label>Swift / Routing Code</label>
+                <input 
+                  type="text" 
+                  value={formData.swiftCode}
+                  onChange={(e) => setFormData({...formData, swiftCode: e.target.value})}
+                  placeholder="VCBKVNVX" 
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <div className="section-header">
+              <FileText size={20} />
               <h3>Passport and ID Details</h3>
-
-
             </div>
             <div className="form-grid-3">
               <div className="form-group">

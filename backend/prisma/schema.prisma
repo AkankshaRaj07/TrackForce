@@ -37,6 +37,12 @@ model Employee {
   cvPath         String?
   idDocPath      String?
   
+  // Bank Account Details
+  bankName          String?
+  accountNumber     String?
+  accountHolderName String?
+  swiftCode         String?
+  
   // Relations
   siteId      String? // Relation to Site
 

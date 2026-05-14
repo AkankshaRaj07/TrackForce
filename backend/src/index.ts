@@ -272,7 +272,12 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/employees', authenticateToken, requireAdmin, employeeUploads, async (req: any, res: Response) => {
-  const { employeeId, fullName, phone, password, role, designation, siteId, hourlyRate, overtimeType, overtimeValue, passportNumber, passportExpiry, passportIssue, dob } = req.body;
+  const { 
+    employeeId, fullName, phone, password, role, designation, siteId, 
+    hourlyRate, overtimeType, overtimeValue, 
+    passportNumber, passportExpiry, passportIssue, dob,
+    bankName, accountNumber, accountHolderName, swiftCode
+  } = req.body;
   try {
     const nameParts = fullName ? fullName.split(' ') : ['', ''];
     const firstName = nameParts[0] || '';
@@ -290,7 +295,8 @@ app.post('/api/employees', authenticateToken, requireAdmin, employeeUploads, asy
       data: {
         employeeId, firstName, lastName, phone, password: hashedPassword, plainPassword: password || 'password123', role: role || 'EMPLOYEE', designation, siteId, avatar, cvPath, idDocPath,
         hourlyRate: parseFloat(hourlyRate as any) || 0.0, overtimeType: overtimeType || 'MULTIPLIER', overtimeValue: parseFloat(overtimeValue as any) || 1.5,
-        passportNumber, passportExpiry: passportExpiry ? new Date(passportExpiry) : null, passportIssue: passportIssue ? new Date(passportIssue) : null, dob: dob ? new Date(dob) : null
+        passportNumber, passportExpiry: passportExpiry ? new Date(passportExpiry) : null, passportIssue: passportIssue ? new Date(passportIssue) : null, dob: dob ? new Date(dob) : null,
+        bankName, accountNumber, accountHolderName, swiftCode
       } as any
     });
     res.status(201).json({ ...newEmployee, password: undefined });
@@ -351,7 +357,7 @@ app.put('/api/employees/:id', authenticateToken, employeeUploads, async (req: an
 
   // If not management, strip sensitive fields to prevent self-elevation or salary modification
   if (!isManagement) {
-    const allowedFields = ['firstName', 'lastName', 'phone', 'password', 'avatar', 'dob'];
+    const allowedFields = ['firstName', 'lastName', 'phone', 'password', 'avatar', 'dob', 'bankName', 'accountNumber', 'accountHolderName', 'swiftCode'];
     const filteredData: any = {};
     allowedFields.forEach(field => {
       if (data[field] !== undefined) filteredData[field] = data[field];

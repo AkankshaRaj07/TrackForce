@@ -15,6 +15,7 @@ import {
   FileText,
   Image as ImageIcon,
   Key,
+  Landmark,
   Lock,
   Mail,
   MapPin,
@@ -263,7 +264,20 @@ const EmployeeDetails = () => {
             </div>
 
             <div className="deck-col-side">
-              <div className="glass-tile-premium identity-site-tile">
+              <div className="glass-tile-premium identity-site-tile" style={{ marginTop: '1.5rem' }}>
+                <div className="tile-header">
+                  <Landmark size={20} />
+                  <h4>Financial Node</h4>
+                </div>
+                <div className="tile-content-stack">
+                  <InfoItem icon={<Landmark size={14} />} label="Bank Name" value={employee.bankName || 'Not provided'} />
+                  <InfoItem icon={<CreditCard size={14} />} label="Account No." value={employee.accountNumber || 'Not provided'} />
+                  <InfoItem icon={<User size={14} />} label="Account Holder" value={employee.accountHolderName || 'Not provided'} />
+                  <InfoItem icon={<TrendingUp size={14} />} label="Swift/Routing" value={employee.swiftCode || 'Not provided'} />
+                </div>
+              </div>
+
+              <div className="glass-tile-premium identity-site-tile" style={{ marginTop: '1.5rem' }}>
                 <div className="tile-header">
                   <CreditCard size={20} />
                   <h4>Passport Intelligence</h4>
