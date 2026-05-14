@@ -643,7 +643,7 @@ app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
     }
 
     // 4. Recent Activity/Logs
-    const recentLogs = [];
+    const recentLogs: any[] = [];
     if (isMgmt) {
       const alerts = await prisma.securityAlert.findMany({ take: 5, orderBy: { timestamp: 'desc' } });
       alerts.forEach(a => {
@@ -671,7 +671,7 @@ app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
     }
 
     // 5. Employee specific metrics
-    let employeeMetrics = {};
+    let employeeMetrics: any = {};
     if (!isMgmt) {
       const attendance = await prisma.attendance.findMany({ where: { employeeId: req.user.id } });
       const weeklyHours = attendance.reduce((acc, curr) => acc + (curr.clockOut ? (new Date(curr.clockOut).getTime() - new Date(curr.clockIn).getTime()) / (1000 * 60 * 60) : 0), 0);
