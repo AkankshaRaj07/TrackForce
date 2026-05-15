@@ -162,20 +162,51 @@
 }
 
 .suggestion-item {
-  padding: 12px 16px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  color: var(--text-main);
+  padding: 12px 16px;
   cursor: pointer;
-  font-size: 13px;
+  transition: all 0.2s ease;
   border-bottom: 1px solid var(--border);
-  transition: all 0.2s;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
 }
 
 .suggestion-item:hover {
-  background: var(--primary-glow);
+  background: var(--surface-hover);
+}
+
+.suggestion-icon {
   color: var(--primary);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.suggestion-text-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.main-place {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub-address {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 

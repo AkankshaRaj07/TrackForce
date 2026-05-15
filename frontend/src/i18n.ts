@@ -166,10 +166,12 @@ i18n
           infrastructureNode: 'Infrastructure Node',
           dbSync: 'Database Synchronization',
           syncing: 'Syncing',
-          apiLatency: 'API Latency',
-          clearCache: 'Clear Persistence Cache',
+          apiLatency: 'API Latency',          clearCache: 'Clear Persistence Cache',
           online: 'Online',
-          admin: 'Admin'
+          admin: 'Admin',
+          navigation: 'Navigation',
+          darkMode: 'Dark Mode',
+          manageSites: 'Manage Sites'
         }
       },
       vi: {
@@ -325,7 +327,10 @@ i18n
           apiLatency: 'Độ Trễ API',
           clearCache: 'Xóa Bộ Nhớ Đệm Tạm Thời',
           online: 'Trực tuyến',
-          admin: 'Quản trị viên'
+          admin: 'Quản trị viên',
+          navigation: 'Điều hướng',
+          darkMode: 'Chế độ tối',
+          manageSites: 'Quản lý địa điểm'
         }
       }
     }

@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 import type { ToastType } from '../components/Toast';
 
+import { loadFaceApiModels, areModelsLoaded } from '../utils/aiModels';
 import './Attendance.css';
 
 
@@ -56,7 +57,7 @@ const Attendance = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isClockingOut, setIsClockingOut] = useState(false);
-  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(areModelsLoaded());
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -73,6 +74,7 @@ const Attendance = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [showManualLog, setShowManualLog] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [showCalendar, setShowCalendar] = useState(false);
   const [showInTimePicker, setShowInTimePicker] = useState(false);
   const [showOutTimePicker, setShowOutTimePicker] = useState(false);
@@ -101,22 +103,15 @@ const Attendance = () => {
   };
 
   useEffect(() => {
-    const loadModels = async () => {
-      try {
-        const MODEL_URL = '/models';
-        await Promise.all([
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-        ]);
-        setModelsLoaded(true);
-      } catch (err) {
-        console.error("Error loading models:", err);
-        addToast("AI initialization failed. Please refresh the page.", 'error');
-      }
-    };
-    loadModels();
-  }, []);
+    if (!modelsLoaded) {
+      loadFaceApiModels()
+        .then(() => setModelsLoaded(true))
+        .catch(err => {
+          console.error("AI load error:", err);
+          addToast("AI initialization failed.", 'error');
+        });
+    }
+  }, [modelsLoaded]);
 
   useEffect(() => {
     if (showScanner) {
@@ -981,6 +976,8 @@ const Attendance = () => {
     </>
   );
 
+  const filteredAllLogs = allLogs.filter(log => log.date.startsWith(selectedMonth));
+
   const statsData = (() => {
     const calcHours = (logs: any[]) => logs.reduce((acc, log) => {
       if (log.duration) return acc + (log.duration / 60);
@@ -990,9 +987,9 @@ const Attendance = () => {
       return acc;
     }, 0);
 
-    const approvedHours = calcHours(allLogs.filter(l => l.status === 'APPROVED' || l.status === 'PRESENT'));
-    const rejectedHours = calcHours(allLogs.filter(l => l.status === 'REJECTED'));
-    const pendingHours = calcHours(allLogs.filter(l => l.status === 'PENDING'));
+    const approvedHours = calcHours(filteredAllLogs.filter(l => l.status === 'APPROVED' || l.status === 'PRESENT' || l.status === 'PAID'));
+    const rejectedHours = calcHours(filteredAllLogs.filter(l => l.status === 'REJECTED'));
+    const pendingHours = calcHours(filteredAllLogs.filter(l => l.status === 'PENDING'));
     const totalHours = approvedHours + rejectedHours + pendingHours;
     const efficiency = totalHours > 0 ? (approvedHours / totalHours) * 100 : 0;
 
@@ -1240,10 +1237,14 @@ const Attendance = () => {
               <button className="btn-back"><ChevronLeft size={20} /></button>
               <h1>{t('workforceAttendance')}</h1>
             </div>
-            <div className="date-picker-button">
+            <div 
+              className="date-picker-button" 
+              title="Filter by Month/Year"
+              onClick={() => setShowCalendar(true)}
+            >
               <Calendar size={16} />
               <span>
-                {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                {new Date(selectedMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
               </span>
             </div>
 
@@ -1314,15 +1315,15 @@ const Attendance = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {allLogs.map((log, idx) => (
+                  {filteredAllLogs.map((log, idx) => (
                     <tr key={log.id || idx}>
-                      <td className="emp-cell">
+                      <td data-label={t('employee')} className="emp-cell">
                         <span>{log.employee?.firstName || 'Unknown'} {log.employee?.lastName || ''}</span>
                       </td>
-                      <td>{new Date(log.date).toLocaleDateString()}</td>
-                      <td>{log.clockIn ? new Date(log.clockIn).toLocaleTimeString() : '---'}</td>
-                      <td>{log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '---'}</td>
-                      <td>
+                      <td data-label={t('date')}>{new Date(log.date).toLocaleDateString()}</td>
+                      <td data-label={t('checkin')}>{log.clockIn ? new Date(log.clockIn).toLocaleTimeString() : '---'}</td>
+                      <td data-label={t('checkout')}>{log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '---'}</td>
+                      <td data-label={t('verification')}>
                         <div className="proof-stack-mini">
                           {log.biometricProof ? (
                             <button className="btn-proof-tiny in" title="View Check-in Identity Proof" onClick={() => setSelectedProof(log.biometricProof.startsWith('http') ? log.biometricProof : `${API_URL}${log.biometricProof}`)}>
@@ -1340,8 +1341,12 @@ const Attendance = () => {
                           )}
                         </div>
                       </td>
-                      <td><span className={`badge badge-${(log.status || 'PENDING').toLowerCase()}`}>{t((log.status || 'PENDING').toLowerCase())}</span></td>
-                      <td>
+                      <td data-label={t('status')}>
+                        <span className={`badge badge-${(log.status === 'PAID' ? 'APPROVED' : log.status || 'PENDING').toLowerCase()}`}>
+                          {t((log.status === 'PAID' ? 'APPROVED' : log.status || 'PENDING').toLowerCase())}
+                        </span>
+                      </td>
+                      <td data-label={t('action')}>
                         <div className="approval-actions">
                           {log.status === 'PENDING' && (
                             <>
@@ -1374,8 +1379,8 @@ const Attendance = () => {
                 
                 <div className="timeline-body">
                   {/* Group logs by employee for the selected day */}
-                  {Array.from(new Set(allLogs.map(l => l.employeeId))).map(empId => {
-                    const empLogs = allLogs.filter(l => l.employeeId === empId);
+                  {Array.from(new Set(filteredAllLogs.map(l => l.employeeId))).map(empId => {
+                    const empLogs = filteredAllLogs.filter(l => l.employeeId === empId);
                     const emp = empLogs[0]?.employee;
                     
                     return (
@@ -1415,6 +1420,59 @@ const Attendance = () => {
         </main>
       </div>
       {renderModals()}
+      
+      <AnimatePresence>
+        {showCalendar && (
+          <div className="proof-modal-overlay month-picker-overlay" onClick={() => setShowCalendar(false)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-card custom-month-picker"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="picker-header">
+                <button className="year-btn" onClick={() => {
+                  const currentYear = parseInt(selectedMonth.split('-')[0]);
+                  setSelectedMonth(`${currentYear - 1}-${selectedMonth.split('-')[1]}`);
+                }}><ChevronLeft size={18} /></button>
+                <span className="year-display">{selectedMonth.split('-')[0]}</span>
+                <button className="year-btn" onClick={() => {
+                  const currentYear = parseInt(selectedMonth.split('-')[0]);
+                  setSelectedMonth(`${currentYear + 1}-${selectedMonth.split('-')[1]}`);
+                }}><ChevronLeft size={18} style={{ transform: 'rotate(180deg)' }} /></button>
+              </div>
+              
+              <div className="months-grid">
+                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => {
+                  const monthNum = (i + 1).toString().padStart(2, '0');
+                  const isSelected = selectedMonth.split('-')[1] === monthNum;
+                  return (
+                    <button 
+                      key={m}
+                      className={`month-cell ${isSelected ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedMonth(`${selectedMonth.split('-')[0]}-${monthNum}`);
+                        setShowCalendar(false);
+                      }}
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <div className="picker-footer">
+                <button className="btn-ghost btn-sm" onClick={() => {
+                  setSelectedMonth(new Date().toISOString().slice(0, 7));
+                  setShowCalendar(false);
+                }}>Current Month</button>
+                <button className="btn-primary btn-sm" onClick={() => setShowCalendar(false)}>Done</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

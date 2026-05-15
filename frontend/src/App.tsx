@@ -18,6 +18,10 @@ import './App.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { loadFaceApiModels } from './utils/aiModels';
+
+// Pre-load AI models in the background
+loadFaceApiModels().catch(console.error);
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { isAuthenticated, isAdmin } = useAuth();

@@ -53,6 +53,8 @@ const StatCard = ({ icon, label, value, trend, color, description }: any) => (
   </motion.div>
 );
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Dashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const { user } = useAuth();
@@ -73,6 +75,10 @@ const Dashboard = () => {
 
   const chartData = stats?.weeklyTrend || [];
 
+  const avatarSrc = user?.avatar 
+    ? (user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`) 
+    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.firstName || 'User'}`;
+
   return (
     <div className="dashboard-container-elite">
       <header className="command-header">
@@ -82,7 +88,7 @@ const Dashboard = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="user-avatar-elite"
           >
-            <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.firstName}`} alt="User" />
+            <img src={avatarSrc} alt="" />
             <div className="status-ring"></div>
           </motion.div>
           <div className="welcome-text">
@@ -192,13 +198,12 @@ const Dashboard = () => {
               <TrendingUp size={18} className="header-icon" />
               <h3>Attendance Trajectory</h3>
             </div>
-            <div className="chart-legend-elite">
-              <span className="legend-item"><span className="dot primary"></span> Active Capacity</span>
-            </div>
           </div>
-          <div className="chart-container-elite">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+          <div className="chart-wrapper-premium">
+            <div className="vertical-axis-label">Active Capacity</div>
+            <div className="chart-container-elite">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -30, bottom: 40 }}>
                 <defs>
                   <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#568F87" stopOpacity={0.3} />
@@ -206,7 +211,7 @@ const Dashboard = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 10}} angle={-90} textAnchor="end" height={60} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
                 <Tooltip 
                   contentStyle={{ background: '#064232', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
@@ -216,6 +221,7 @@ const Dashboard = () => {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
         </motion.div>
 
         <motion.div 
@@ -257,15 +263,17 @@ const Dashboard = () => {
             animate={{ opacity: 1, x: 0 }}
             className="glass-card metrics-chart-card"
           >
-            <div className="card-header-elite">
-              <div className="title-group">
-                <TrendingUp size={18} className="header-icon" />
-                <h3>Personal Progress</h3>
-              </div>
+          <div className="card-header-elite">
+            <div className="title-group">
+              <TrendingUp size={18} className="header-icon" />
+              <h3>Personal Progress</h3>
             </div>
+          </div>
+          <div className="chart-wrapper-premium">
+            <div className="vertical-axis-label">Performance Metric</div>
             <div className="chart-container-elite">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -30, bottom: 40 }}>
                   <defs>
                     <linearGradient id="colorPersonal" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#F5BABB" stopOpacity={0.3} />
@@ -273,7 +281,7 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 10}} angle={-90} textAnchor="end" height={60} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
                   <Tooltip 
                     contentStyle={{ background: '#064232', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
@@ -283,6 +291,7 @@ const Dashboard = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+          </div>
           </motion.div>
 
           <motion.div 

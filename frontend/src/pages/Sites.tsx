@@ -162,7 +162,7 @@ const Sites = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              {isManager && (
+              {isAdmin && (
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -201,7 +201,7 @@ const Sites = () => {
                       <span className="status-dot active"></span>
                       ACTIVE
                     </div>
-                    {isManager && (
+                    {isAdmin && (
                       <div className="site-actions-premium">
                         <button 
                           className="icon-btn-small edit" 

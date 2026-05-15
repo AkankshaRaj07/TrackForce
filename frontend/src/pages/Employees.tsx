@@ -187,7 +187,7 @@ const Employees = () => {
           <tbody>
             {filteredEmployees.map((emp) => (
               <tr key={emp.id}>
-                <td>
+                <td data-label="Employee Name">
                   <div className="emp-identity">
                     <div className="name-stack">
                       <span className="full-name">{emp.firstName} {emp.lastName}</span>
@@ -195,16 +195,16 @@ const Employees = () => {
                     </div>
                   </div>
                 </td>
-                <td><span className="mono-badge">{emp.employeeId}</span></td>
-                <td><span className="email-text">{emp.phone || 'N/A'}</span></td>
-                <td>
+                <td data-label="Login ID"><span className="mono-badge">{emp.employeeId}</span></td>
+                <td data-label="Phone Number"><span className="email-text">{emp.phone || 'N/A'}</span></td>
+                <td data-label="Role & Status">
                   <div className="role-status">
                     <span className="role-tag">{emp.role}</span>
                     <span className={`status-dot ${emp.status.toLowerCase()}`}></span>
                   </div>
                 </td>
-                <td>{emp.site?.name || 'Unassigned'}</td>
-                <td>
+                <td data-label="Site">{emp.site?.name || 'Unassigned'}</td>
+                <td data-label="Actions">
                   <div className="action-row">
                     <button className="action-icon-btn" onClick={() => navigate(`/employees/${emp.id}`)} title="View Node Details">
                       <Eye size={18} />

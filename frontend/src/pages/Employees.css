@@ -115,6 +115,17 @@
 }
 
 @media (max-width: 768px) {
+  .employees-container {
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  .employees-toolbar-premium {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
   .filter-site-premium {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -131,6 +142,7 @@
     display: flex;
     flex-wrap: wrap;
     width: 100%;
+    gap: 8px;
   }
 
   .header-actions .btn {

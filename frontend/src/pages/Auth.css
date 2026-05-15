@@ -43,7 +43,7 @@
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: 32px;
-  padding: 48px;
+  padding: 32px 40px;
   box-shadow: var(--shadow-lg);
   position: relative;
   transition: all var(--transition-slow);
@@ -62,7 +62,7 @@
 
 .auth-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
 .auth-logo {
@@ -86,7 +86,7 @@
 }
 
 .auth-header h2 {
-  font-size: 34px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.04em;
@@ -102,7 +102,7 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .form-group-premium {
@@ -159,7 +159,7 @@
 
 .input-wrapper-premium input {
   width: 100% !important;
-  padding: 16px 20px 16px 56px !important;
+  padding: 14px 20px 14px 56px !important;
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: 16px;
@@ -185,7 +185,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
-  margin: 10px 0;
+  margin: 4px 0;
 }
 
 .checkbox-label {
@@ -209,7 +209,7 @@
 
 
 .btn-premium {
-  height: 56px;
+  height: 48px;
   border-radius: 16px;
   font-weight: 700;
   font-size: 16px;
@@ -238,7 +238,7 @@
 
 
 .auth-divider {
-  margin: 32px 0;
+  margin: 20px 0;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -267,27 +267,73 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.lang-toggle-auth {
+.auth-card-toolbar {
   position: absolute;
-  top: 40px;
-  right: 40px;
-  z-index: 100;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 20;
 }
 
-.lang-btn-auth {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 8px 16px;
+.toolbar-btn {
+  background: rgba(var(--bg-rgb), 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
-.lang-btn-auth:hover {
-  background: rgba(255, 255, 255, 0.1);
+.toolbar-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.toolbar-btn.lang-btn {
+  width: auto;
+  padding: 0 12px;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .auth-card-toolbar {
+    top: 16px;
+    right: 16px;
+    gap: 6px;
+  }
+
+  .toolbar-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .toolbar-btn.lang-btn {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .auth-container {
+    padding: 12px;
+    margin-top: 0;
+  }
+
+  .auth-card-premium {
+    padding: 48px 20px 24px 20px; /* More top padding for the toolbar */
+  }
 }
 
 .auth-error-premium {
@@ -312,4 +358,84 @@
   20%, 80% { transform: translate3d(2px, 0, 0); }
   30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
   40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* Consolidated Mobile Responsiveness */
+@media (max-width: 768px) {
+  .auth-card-toolbar {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    justify-content: space-between;
+  }
+
+  .toolbar-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .toolbar-btn.lang-btn {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .auth-container {
+    padding: 12px;
+  }
+
+  .auth-card-premium {
+    padding: 48px 16px 20px 16px; /* Top padding for toolbar */
+    border-radius: 20px;
+  }
+
+  .auth-header {
+    margin-bottom: 16px;
+  }
+
+  .auth-header h2 {
+    font-size: 24px;
+  }
+
+  .logo-text {
+    font-size: 20px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .input-wrapper-premium input {
+    padding: 10px 16px 10px 44px !important;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  .input-wrapper-premium > svg {
+    left: 14px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-premium {
+    height: 42px;
+    font-size: 14px;
+    border-radius: 12px;
+    margin-top: 4px;
+  }
+
+  .auth-divider {
+    margin: 12px 0;
+  }
+
+  .forgot-link, .checkbox-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-header h2 {
+    font-size: 22px;
+  }
+
+  .auth-card-premium {
+    padding: 44px 14px 16px 14px;
+  }
 }

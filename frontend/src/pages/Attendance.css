@@ -67,6 +67,23 @@
   margin-top: 4px;
 }
 
+.biometric-verified-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px auto 0;
+  padding: 6px 16px;
+  background: var(--primary-glow);
+  border: 1px solid var(--primary);
+  border-radius: 99px;
+  width: fit-content;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
 .hours-summary {
   display: flex;
   flex-direction: column;
@@ -657,16 +674,320 @@
 }
 
 @media (max-width: 768px) {
-  .enterprise-page { padding: 20px; }
-  .attendance-layout { grid-template-columns: 1fr; }
-  .profile-sidebar { display: flex; flex-direction: column; }
-  .user-attendance-grid { padding: 20px; gap: 24px; }
-  .biometric-viewport { width: 240px; height: 240px; }
-  .scanner-card { padding: 24px; }
-  .stats-row { grid-template-columns: 1fr; gap: 20px; }
-  .s-card .value { font-size: 32px; }
-  .mini-row { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .m-date { width: 100%; }
+  .enterprise-page { padding: 8px; }
+  .attendance-layout { grid-template-columns: 1fr; gap: 12px; }
+  
+  .profile-sidebar { 
+    padding: 12px; 
+    gap: 0 !important; 
+    border-radius: 20px;
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .profile-card-mini {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .avatar-wrapper { 
+    width: 52px; 
+    height: 52px; 
+    margin: 0 auto 4px !important; 
+  }
+
+  .biometric-verified-badge {
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+    margin: 0 auto 8px !important;
+    justify-content: center;
+    background: rgba(86, 143, 135, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+    width: fit-content;
+    color: var(--primary);
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .personal-actions-sidebar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+
+  .status-indicator {
+    padding: 2px 8px !important;
+    font-size: 9px;
+    margin: 0 auto !important;
+  }
+
+  .btn-block {
+    height: 44px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .hours-summary {
+    width: 100%;
+    margin-top: 0;
+    padding-top: 8px; /* Just a small padding instead of a large gap */
+  }
+
+  .total-hours-main {
+    padding: 10px 16px;
+    background: var(--surface-hover);
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .total-hours-main .v-stack {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .total-hours-main .value { font-size: 18px; }
+  .total-hours-main .label { font-size: 11px; margin-top: 0; }
+
+  .main-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0 4px;
+  }
+
+  .title-section h1 {
+    font-size: 18px; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .attendance-main { gap: 16px; }
+
+  .breakdown-banner {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px;
+    padding: 12px 16px;
+    text-align: left !important;
+  }
+
+  .breakdown-info {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .b-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .b-text .label {
+    font-size: 11px;
+    margin: 0;
+  }
+
+  .b-text .value {
+    font-size: 18px;
+    margin: 0 !important;
+  }
+
+  .progress-track {
+    display: none; /* Hide progress bar on mobile to save space */
+  }
+
+  .breakdown-stats {
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+  }
+
+  .s-item {
+    font-size: 11px;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+
+  .action-bar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .toggle-group {
+    justify-content: center;
+  }
+
+  .btn-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-row button {
+    width: 100%;
+  }
+
+  /* Eliminate Horizontal Scroll */
+  .attendance-layout {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .table-container {
+    overflow-x: visible; /* Remove internal scroll if possible */
+  }
+
+  .enterprise-table, 
+  .enterprise-table thead, 
+  .enterprise-table tbody, 
+  .enterprise-table th, 
+  .enterprise-table td, 
+  .enterprise-table tr {
+    display: block; /* Convert table to block for card layout */
+  }
+
+  .enterprise-table thead {
+    display: none; /* Hide headers on mobile */
+  }
+
+  .enterprise-table tr {
+    margin-bottom: 16px;
+    background: var(--surface-hover);
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .enterprise-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 13px;
+    text-align: right;
+  }
+
+  .enterprise-table td::before {
+    content: attr(data-label); /* We'll need to add data-label to JSX */
+    float: left;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .enterprise-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* High-Density Mobile Adjustments */
+  .enterprise-page { padding: 8px; }
+  .attendance-layout { gap: 12px; }
+  
+  .breakdown-banner { 
+    padding: 12px; 
+    gap: 12px;
+  }
+  .breakdown-info h2 { font-size: 16px; margin-bottom: 2px; }
+  .breakdown-info p { display: none; } /* Hide description on mobile */
+  
+  .s-card { padding: 12px; border-radius: 12px; }
+  .s-card .value { font-size: 22px; }
+  .s-card .label { font-size: 9px; }
+
+  /* Timeline Mobile Master Fix */
+  .timeline-container {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .timeline-grid {
+    width: 100%;
+    min-width: 100% !important;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .timeline-header, .timeline-row {
+    display: grid !important;
+    grid-template-columns: 80px 1fr; /* Fixed name col, flexible track */
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .employee-col {
+    width: 100% !important;
+    min-width: 0;
+    font-size: 11px !important;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .time-axis {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+  }
+
+  .time-label {
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--primary);
+  }
+
+  /* Only show 00, 08, 16, 24 to save space */
+  .time-label:not(:nth-child(4n+1)) {
+    display: none !important;
+  }
+
+  .shift-track {
+    width: 100% !important;
+    height: 24px;
+    background: rgba(86, 143, 135, 0.2); /* Darker for better light-mode visibility */
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shift-bar {
+    border-radius: 4px;
+  }
 }
 
 
@@ -1290,8 +1611,8 @@
   z-index: 10;
 }
 
-.shift-bar.approved, .shift-bar.present {
-  background: linear-gradient(90deg, #10b981, #34d399);
+.shift-bar.approved, .shift-bar.present, .shift-bar.paid {
+  background: linear-gradient(90deg, #10b981, #34d399) !important;
 }
 
 .shift-bar.pending {
@@ -1484,3 +1805,121 @@
   top: auto;
   bottom: calc(100% + 10px);
 }
+
+/* Dark Mode Specific Visibility Adjustments */
+[data-theme='dark'] .shift-track {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .shift-bar {
+  background: var(--primary) !important; /* Rose in dark mode */
+  box-shadow: 0 0 15px var(--primary-glow);
+  color: #000 !important;
+}
+
+[data-theme='dark'] .shift-bar .bar-label {
+  color: #000 !important;
+  font-weight: 800;
+}
+
+[data-theme='dark'] .time-label {
+  color: var(--text-dim) !important;
+  opacity: 1;
+}
+
+[data-theme='dark'] .emp-name {
+  color: var(--text-primary);
+}
+
+.custom-month-picker {
+  width: 320px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1000;
+}
+
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.year-btn {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.year-btn:hover {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+}
+
+.year-display {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.months-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.month-cell {
+  padding: 12px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.month-cell:hover {
+  background: var(--surface-bright);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.month-cell.selected {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.picker-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.month-picker-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+[data-theme='dark'] .timeline-row {
+  background: var(--surface);
+  border-color: var(--border);
+}
+

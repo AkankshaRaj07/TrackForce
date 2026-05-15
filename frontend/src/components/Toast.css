@@ -60,3 +60,18 @@
   flex-direction: column;
   pointer-events: none;
 }
+
+@media (max-width: 768px) {
+  .premium-toast-container {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    align-items: center;
+  }
+
+  .premium-toast {
+    min-width: auto;
+    width: 100%;
+    max-width: 340px;
+  }
+}

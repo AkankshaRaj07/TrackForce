@@ -32,7 +32,7 @@ const siteIcon = new L.Icon({
 const MapRefresher = ({ center }: { center: [number, number] }) => {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, 15);
+    map.setView(center, 18); // Increased zoom for 'reachability' of small places
   }, [center, map]);
   return null;
 };
@@ -102,11 +102,30 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
   const handleSearch = async (query: string) => {
     setIsSearching(true);
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+      // Switching to Photon API (Photon is powered by Elasticsearch and often better at finding POIs like colleges)
+      const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=10`);
       const data = await response.json();
-      setSuggestions(data);
+      
+      // Transform Photon format to match our previous expectation or map it directly
+      const formattedResults = data.features.map((f: any) => ({
+        display_name: [
+          f.properties.name,
+          f.properties.street,
+          f.properties.city,
+          f.properties.state,
+          f.properties.country
+        ].filter(Boolean).join(', '),
+        lat: f.geometry.coordinates[1],
+        lon: f.geometry.coordinates[0]
+      }));
+
+      setSuggestions(formattedResults);
     } catch (err) {
       console.error(err);
+      // Fallback to basic Nominatim if Photon fails
+      const fallback = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+      const fallbackData = await fallback.json();
+      setSuggestions(fallbackData);
     } finally {
       setIsSearching(false);
     }
@@ -306,8 +325,11 @@ const AddSiteModal = ({ isOpen, onClose, onSave, addToast, initialData }: AddSit
                                 className="suggestion-item" 
                                 onClick={() => handleSelectSuggestion(s)}
                               >
-                                <MapPin size={14} />
-                                <span>{s.display_name}</span>
+                                <MapPin size={14} className="suggestion-icon" />
+                                <div className="suggestion-text-stack">
+                                  <span className="main-place">{s.display_name.split(',')[0]}</span>
+                                  <span className="sub-address">{s.display_name.split(',').slice(1).join(',')}</span>
+                                </div>
                               </div>
                             ))}
                           </motion.div>

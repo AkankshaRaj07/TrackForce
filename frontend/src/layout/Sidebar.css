@@ -1,149 +1,202 @@
-/* ═══════════════════════════════════════════════
-   Sidebar — Floating Card Design
-   ═══════════════════════════════════════════════ */
-
-.sidebar {
+.sidebar-premium {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
-  transition: all var(--transition-slow);
-  position: relative;
-  z-index: 100;
-  overflow-y: auto;
-  overflow-x: hidden;
+  background: var(--surface);
+  color: var(--text-main);
   box-sizing: border-box;
-}
-
-/* ── Logo ─────────────────────────────────── */
-
-.logo-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 0 8px;
-}
-
-.logo-brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.mobile-close-btn {
-  display: none;
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-  transition: all var(--transition-fast);
-}
-
-.mobile-close-btn:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-@media (max-width: 1024px) {
-  .mobile-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-.logo-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  background: var(--primary);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: 0 4px 12px var(--primary-glow);
-}
-
-/* ── Navigation ───────────────────────────── */
-
-.nav-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-  margin: 0 4px;
-  border-radius: var(--radius-full);
-  color: var(--text-dim);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  transition: all var(--transition-fast);
-  border: none;
-  position: relative;
   overflow: hidden;
 }
 
-.nav-item:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-  transform: translateX(4px);
+.sidebar-header-elite {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px;
 }
 
-.nav-item.active {
-  background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 4px 16px var(--primary-glow);
-  transform: none;
-}
-
-.nav-item.active:hover {
-  background: var(--primary-hover);
-  color: #ffffff;
-  transform: none;
-}
-
-[data-theme='dark'] .nav-item.active {
-  background: var(--primary);
+.sidebar-header-elite h2 {
+  font-size: 20px;
+  font-weight: 800;
   color: #064232;
-  box-shadow: 0 4px 20px var(--primary-glow);
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-[data-theme='dark'] .nav-item.active:hover {
+[data-theme='dark'] .sidebar-header-elite h2 {
+  color: var(--text-main);
+}
+
+.close-btn-round {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #064232;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-btn-round:hover {
+  transform: scale(1.1);
+  background: #085a44;
+}
+
+.nav-menu-premium {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 12px 24px;
+}
+
+.menu-items-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-link-premium {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  color: #568F87;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+}
+
+.nav-link-premium:hover {
+  background: rgba(86, 143, 135, 0.05);
   color: #064232;
 }
 
-/* ── Logout ───────────────────────────────── */
-
-.logout-btn-sidebar {
-  margin-top: 16px;
-  color: #ef4444 !important;
+.nav-link-premium.active {
+  background: #568F87;
+  color: white;
+  box-shadow: 0 8px 16px rgba(86, 143, 135, 0.2);
 }
 
-.logout-btn-sidebar:hover {
-  background: rgba(239, 68, 68, 0.1) !important;
-  color: #ef4444 !important;
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
 }
 
-.nav-item.logout-btn-sidebar.active {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444 !important;
+.sidebar-footer-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 8px 0;
+  border-top: 1px solid var(--border);
 }
 
-/* ── Mobile ───────────────────────────────── */
+.theme-toggle-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+}
 
+.toggle-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #064232;
+  letter-spacing: 0.05em;
+}
+
+[data-theme='dark'] .toggle-label {
+  color: var(--text-main);
+}
+
+.theme-switch-elite {
+  width: 48px;
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 2px;
+}
+
+.theme-switch-elite.dark {
+  background: #064232;
+  border-color: #064232;
+}
+
+.switch-thumb {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #064232;
+  transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.theme-switch-elite.dark .switch-thumb {
+  transform: translateX(24px);
+  background: #ffffff;
+  color: #064232;
+}
+
+.btn-sidebar-primary {
+  background: #F5BABB;
+  color: #064232;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.btn-sidebar-primary:hover {
+  background: #f2a8aa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 186, 187, 0.3);
+}
+
+.logout-btn-premium {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.logout-btn-premium:hover {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* Rounded Drawer Effect for Mobile */
 @media (max-width: 1024px) {
-  .sidebar {
-    padding: 24px 16px;
+  .sidebar-premium {
+    border-radius: 24px 0 0 24px;
   }
 }

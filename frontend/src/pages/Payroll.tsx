@@ -11,7 +11,8 @@ import {
   Search,
   CheckCircle2,
   RefreshCw,
-  Printer
+  Printer,
+  Activity
 } from 'lucide-react';
 import { fetchPayroll, processPayroll, fetchPayrollStats } from '../api/api';
 import { exportToCSV } from '../utils/export';
@@ -41,7 +42,8 @@ const StatCard = ({ icon, label, value, color }: any) => (
 );
 
 const Payroll = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
   const [payrollData, setPayrollData] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -119,14 +121,16 @@ const Payroll = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            Financial Intelligence
+            {isEmployee ? 'Personal Earnings Vault' : 'Financial Intelligence'}
           </motion.h1>
-          <p>Managed payroll cycles and automated fund distributions.</p>
+          <p>{isEmployee ? 'Review your historical payouts and generated payslips.' : 'Managed payroll cycles and automated fund distributions.'}</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-ghost" onClick={handleExport}>
-            <Download size={18} /> Export Registry
-          </button>
+          {!isEmployee && (
+            <button className="btn btn-ghost" onClick={handleExport}>
+              <Download size={18} /> Export Registry
+            </button>
+          )}
           {isAdmin && (
             <button 
               className="btn btn-primary" 
@@ -143,48 +147,59 @@ const Payroll = () => {
       <div className="stats-grid-premium">
         <StatCard 
           icon={<Wallet size={24} />} 
-          label="Total Payouts" 
+          label={isEmployee ? "Total Earned" : "Total Payouts"} 
           value={`${stats?.totalPayout?.toLocaleString() || '0'} ₫`}
           color="#f59e0b"
         />
         <StatCard 
-          icon={<TrendingUp size={24} />} 
-          label="Active Recipients" 
-          value={stats?.activeRecipients || '0'}
-          color="#10b981"
-        />
-        <StatCard 
           icon={<Clock size={24} />} 
-          label="Processing Cycle" 
-          value="Bi-Weekly"
+          label="Cumulative Hours" 
+          value={`${stats?.totalHours || '0.0'}h`}
           color="#6366f1"
         />
+        {isEmployee ? (
+          <StatCard 
+            icon={<CheckCircle2 size={24} />} 
+            label="Verification Status" 
+            value="Identity Verified"
+            color="#10b981"
+          />
+        ) : (
+          <StatCard 
+            icon={<TrendingUp size={24} />} 
+            label="Active Recipients" 
+            value={stats?.activeRecipients || '0'}
+            color="#10b981"
+          />
+        )}
         <StatCard 
-          icon={<CheckCircle2 size={24} />} 
-          label="System Status" 
-          value="Operational"
+          icon={<Activity size={24} />} 
+          label="Ledger Status" 
+          value="Synchronized"
           color="#10b981"
         />
       </div>
 
-      <div className="glass-card table-controls">
-        <div className="search-bar">
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder="Search recipients..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {!isEmployee && (
+        <div className="glass-card table-controls">
+          <div className="search-bar">
+            <Search size={18} />
+            <input 
+              type="text" 
+              placeholder="Search recipients..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="glass-card table-container">
         <table className="enterprise-table">
           <thead>
             <tr>
-              <th>Employee</th>
-              <th>Period</th>
+              {isEmployee ? <th>Period</th> : <th>Employee</th>}
+              {!isEmployee && <th>Period</th>}
               <th>Regular Hours</th>
               <th>Overtime</th>
               <th>Gross Amount</th>
@@ -195,36 +210,42 @@ const Payroll = () => {
           <tbody>
             {filteredData.map((item) => (
               <tr key={item.id}>
-                <td className="emp-cell">
-                  <span>{item.employee?.firstName || 'Unknown'} {item.employee?.lastName || ''}</span>
-                </td>
-                <td>
-                  {item.periodStart ? new Date(item.periodStart).toLocaleDateString() : 'Current'} - {item.periodEnd ? new Date(item.periodEnd).toLocaleDateString() : 'Period'}
-                </td>
-                <td>{item.regularHours || '0.0'} hrs</td>
-                <td>{item.overtimeHours || '0.00'} hrs</td>
-                <td className="amount-cell">
+                {isEmployee ? (
+                   <td data-label="Period">
+                    {item.periodStart ? new Date(item.periodStart).toLocaleDateString() : 'Current'} - {item.periodEnd ? new Date(item.periodEnd).toLocaleDateString() : 'Period'}
+                   </td>
+                ) : (
+                  <td className="emp-cell">
+                    <span>{item.employee?.firstName || 'Unknown'} {item.employee?.lastName || ''}</span>
+                  </td>
+                )}
+                {!isEmployee && (
+                  <td data-label="Period">
+                    {item.periodStart ? new Date(item.periodStart).toLocaleDateString() : 'Current'} - {item.periodEnd ? new Date(item.periodEnd).toLocaleDateString() : 'Period'}
+                  </td>
+                )}
+                <td data-label="Regular Hours">{item.regularHours || '0.0'} hrs</td>
+                <td data-label="Overtime">{item.overtimeHours || '0.00'} hrs</td>
+                <td data-label="Gross Amount" className="amount-cell">
                   {(item.earnings || 0).toLocaleString()} ₫
                 </td>
-                <td>
+                <td data-label="Status">
                   <span className={`badge badge-${(item.status || 'PENDING').toLowerCase()}`}>
                     {item.status || 'PENDING'}
                   </span>
                 </td>
-                <td>
+                <td data-label="Action">
                   <div className="action-row-mini">
-                    <button className="icon-btn" title="View Details">
-                      <FileText size={16} />
-                    </button>
                     <button 
                       className="icon-btn highlight" 
-                      title="Generate Payslip"
+                      title="View Payslip"
                       onClick={() => {
                         setSelectedPayslip(item);
                         setIsPayslipOpen(true);
                       }}
                     >
-                      <Printer size={16} />
+                      {isEmployee ? <FileText size={16} /> : <Printer size={16} />}
+                      {isEmployee && <span style={{ marginLeft: '6px', fontSize: '12px' }}>View Payslip</span>}
                     </button>
                   </div>
                 </td>

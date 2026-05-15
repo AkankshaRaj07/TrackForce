@@ -45,25 +45,27 @@ export const Login = () => {
 
   return (
     <div className={`auth-page ${theme}`}>
-      <div className="lang-toggle-auth">
-        <button className="lang-btn-auth" onClick={toggleTheme} style={{ marginRight: '10px' }}>
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
-        <button className="lang-btn-auth" onClick={toggleLanguage}>
-          <Languages size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-          {i18n.language === 'en' ? 'Tiếng Việt' : 'English'}
-        </button>
-      </div>
+
 
       <div className="auth-container">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
           className="auth-card-premium"
         >
+          <div className="auth-card-toolbar">
+            <button className="toolbar-btn" onClick={toggleTheme} title={theme === 'light' ? 'Dark Mode' : 'Light Mode'}>
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            <button className="toolbar-btn lang-btn" onClick={toggleLanguage}>
+              <Languages size={18} />
+              <span>{i18n.language === 'en' ? 'VN' : 'EN'}</span>
+            </button>
+          </div>
+
           <div className="auth-header">
-            <div className="logo-text" style={{ marginBottom: '16px' }}>TRACK<span>FORCE</span></div>
+            <div className="logo-text" style={{ marginBottom: '8px' }}>TRACK<span>FORCE</span></div>
             <h2>{t('welcomeBack')}</h2>
 
             <p>{t('loginSubtext')}</p>

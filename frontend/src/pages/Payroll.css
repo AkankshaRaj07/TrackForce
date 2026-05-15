@@ -160,8 +160,29 @@
     gap: 16px;
   }
   
-  .payroll-stat-card {
+  .stat-card-premium {
     padding: 16px;
+    gap: 10px;
+  }
+
+  .stat-icon-wrap {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stat-value {
+    font-size: 16px; /* Reduced from 24px */
+    letter-spacing: -0.02em;
+    word-break: break-all;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .stat-trend {
+    top: 16px;
+    right: 16px;
   }
 
   .table-header-controls {
@@ -170,13 +191,65 @@
     gap: 16px;
   }
   
-  .enterprise-table th:nth-child(3),
-  .enterprise-table td:nth-child(3),
-  .enterprise-table th:nth-child(4),
-  .enterprise-table td:nth-child(4),
-  .enterprise-table th:nth-child(5),
-  .enterprise-table td:nth-child(5) {
+  .enterprise-table, 
+  .enterprise-table thead, 
+  .enterprise-table tbody, 
+  .enterprise-table th, 
+  .enterprise-table td, 
+  .enterprise-table tr {
+    display: block;
+  }
+
+  .enterprise-table thead {
     display: none;
+  }
+
+  .enterprise-table tr {
+    margin-bottom: 16px;
+    background: var(--surface-hover);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    position: relative;
+    text-align: left;
+  }
+
+  .enterprise-table td {
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none !important;
+  }
+
+  .enterprise-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-right: 12px;
+  }
+
+  .enterprise-table td:first-child {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border) !important;
+    margin-bottom: 8px;
+    padding-bottom: 12px;
+    display: block;
+  }
+
+  .enterprise-table td:first-child::before {
+    display: none;
+  }
+
+  .enterprise-table td:last-child {
+    justify-content: flex-end;
+    margin-top: 8px;
+    border-top: 1px solid var(--border) !important;
+    padding-top: 12px;
   }
 }
 
@@ -234,13 +307,16 @@
   background: var(--surface-bright);
   border: 1px solid var(--border);
   color: var(--text-dim);
-  width: 36px;
+  min-width: 36px;
+  width: auto;
   height: 36px;
+  padding: 0 12px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s var(--ease-premium);
 }
 
@@ -259,5 +335,40 @@
 .icon-btn.highlight:hover {
   background: var(--primary);
   color: #000;
+}
+
+/* Badge Styling */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  min-width: 75px;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.badge-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.badge-paid {
+  background: #10b981;
+  color: #ffffff;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Ensure table cells align correctly */
+.enterprise-table td {
+  vertical-align: middle;
 }
 

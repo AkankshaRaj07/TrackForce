@@ -127,6 +127,56 @@ cron.schedule('0 0 * * *', () => {
   }
 });
 
+// 15-Hour Auto-Checkout Protocol
+// Runs every 30 minutes to find and automatically close sessions active for > 15 hours
+cron.schedule('*/30 * * * *', async () => {
+  console.log('🔄 [Auto-Checkout Protocol]: Scanning for sessions exceeding 15 hours...');
+  const fifteenHoursAgo = new Date(Date.now() - (15 * 60 * 60 * 1000));
+
+  try {
+    const stalledSessions = await prisma.attendance.findMany({
+      where: {
+        clockOut: null,
+        clockIn: {
+          lt: fifteenHoursAgo
+        }
+      }
+    });
+
+    if (stalledSessions.length > 0) {
+      console.log(`🚀 [Auto-Checkout Protocol]: Processing ${stalledSessions.length} stalled sessions...`);
+      
+      for (const session of stalledSessions) {
+        // Automatically set clock-out to 8 hours after clock-in
+        const autoClockOut = new Date(session.clockIn.getTime() + (8 * 60 * 60 * 1000));
+        
+        await prisma.attendance.update({
+          where: { id: session.id },
+          data: {
+            clockOut: autoClockOut,
+            status: 'PRESENT',
+            biometricProofOut: 'SYSTEM_AUTO_CHECKOUT'
+          }
+        });
+
+        // Log a security alert for administrative visibility
+        await prisma.securityAlert.create({
+          data: {
+            type: 'AUTO_CHECKOUT',
+            message: `System auto-checkout: Session ${session.id.substring(0,8)}... exceeded 15 hours. Force-closed at 8 hours of duration.`,
+            severity: 'LOW',
+            employeeId: session.employeeId,
+            siteId: session.siteId
+          }
+        });
+      }
+      console.log('✅ [Auto-Checkout Protocol]: Successfully synchronized all sessions.');
+    }
+  } catch (err) {
+    console.error('❌ [Auto-Checkout Protocol Error]:', err);
+  }
+});
+
 // Auth Middleware
 const authenticateToken = (req: any, res: any, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
@@ -196,7 +246,12 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     const validPassword = await bcrypt.compare(password, employee.password);
     if (!validPassword) return res.status(400).json({ error: 'Invalid Employee ID or password' });
 
-    const token = jwt.sign({ id: employee.id, employeeId: employee.employeeId, role: employee.role }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ 
+      id: employee.id, 
+      employeeId: employee.employeeId, 
+      role: employee.role,
+      siteId: employee.siteId // Include siteId for management filtering
+    }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ token, user: { ...employee, password: undefined } });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -214,7 +269,7 @@ app.get('/api/sites', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/sites', authenticateToken, requireManagement, async (req, res) => {
+app.post('/api/sites', authenticateToken, requireAdmin, async (req, res) => {
   const { name, location, managerName, latitude, longitude, geofenceRadius } = req.body;
   try {
     const site = await prisma.site.create({
@@ -231,7 +286,7 @@ app.post('/api/sites', authenticateToken, requireManagement, async (req, res) =>
   }
 });
 
-app.put('/api/sites/:id', authenticateToken, requireManagement, async (req, res) => {
+app.put('/api/sites/:id', authenticateToken, requireAdmin, async (req, res) => {
   const { name, location, managerName, geofenceRadius, latitude, longitude } = req.body;
   try {
     const site = await prisma.site.update({
@@ -250,7 +305,7 @@ app.put('/api/sites/:id', authenticateToken, requireManagement, async (req, res)
   }
 });
 
-app.delete('/api/sites/:id', authenticateToken, requireManagement, async (req, res) => {
+app.delete('/api/sites/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     await prisma.employee.updateMany({ where: { siteId: req.params.id }, data: { siteId: null } });
     await prisma.site.delete({ where: { id: req.params.id } });
@@ -262,9 +317,39 @@ app.delete('/api/sites/:id', authenticateToken, requireManagement, async (req, r
 
 // --- Employee Routes ---
 
-app.get('/api/employees', authenticateToken, async (req, res) => {
+app.get('/api/employees', authenticateToken, async (req: any, res) => {
   try {
-    const employees = await prisma.employee.findMany({ include: { site: true } });
+    const isAdmin = req.user.role === 'ADMIN';
+    const isManager = req.user.role === 'MANAGER';
+    
+    // Safety Fallback: If siteId is missing from token (old session), fetch it from DB
+    let currentSiteId = req.user.siteId;
+    if (isManager && !currentSiteId) {
+      const me = await prisma.employee.findUnique({ where: { id: req.user.id } });
+      currentSiteId = me?.siteId;
+    }
+
+    // Managers only see employees in their site. Employees only see themselves.
+    let where: any = {};
+    if (isManager) {
+      // Managers must have a siteId to see anyone, and they can NEVER see Admins
+      where = { 
+        siteId: currentSiteId,
+        role: { not: 'ADMIN' }
+      };
+      
+      // If siteId is still null/undefined, ensure they don't see "Unassigned" employees by mistake
+      if (!currentSiteId) {
+        where.id = req.user.id; // Only see themselves
+      }
+    } else if (!isAdmin) {
+      where = { id: req.user.id };
+    }
+
+    const employees = await prisma.employee.findMany({ 
+      where,
+      include: { site: true } 
+    });
     res.json(employees);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch employees' });
@@ -305,17 +390,23 @@ app.post('/api/employees', authenticateToken, requireAdmin, employeeUploads, asy
   }
 });
 
-app.get('/api/employees/:id', authenticateToken, async (req, res) => {
+app.get('/api/employees/:id', authenticateToken, async (req: any, res) => {
   try {
     const employee = await prisma.employee.findUnique({ where: { id: req.params.id }, include: { site: true } });
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
+    
+    // Security Check: Manager can only see their site employees
+    if (req.user.role === 'MANAGER' && employee.siteId !== req.user.siteId) {
+      return res.status(403).json({ error: 'Forbidden. This employee is not in your assigned site.' });
+    }
+
     res.json({ ...employee, password: employee.plainPassword || 'Encoded' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch employee' });
   }
 });
 
-app.get('/api/employees/:id/full-profile', authenticateToken, async (req, res) => {
+app.get('/api/employees/:id/full-profile', authenticateToken, async (req: any, res) => {
   try {
     const employee = await prisma.employee.findUnique({
       where: { id: req.params.id },
@@ -496,7 +587,12 @@ app.get('/api/attendance', authenticateToken, async (req: any, res) => {
     const isAdmin = req.user.role === 'ADMIN';
     const isManager = req.user.role === 'MANAGER';
     
-    const where = (!isAdmin && !isManager) ? { employeeId: req.user.id } : {};
+    let where = {};
+    if (isManager) {
+      where = { siteId: req.user.siteId };
+    } else if (!isAdmin) {
+      where = { employeeId: req.user.id };
+    }
     
     const logs = await prisma.attendance.findMany({
       where,
@@ -570,8 +666,31 @@ app.post('/api/attendance/break-end/:id', authenticateToken, async (req, res) =>
 
 app.get('/api/payroll', authenticateToken, async (req: any, res: Response) => {
   try {
-    const isManagement = req.user.role !== 'EMPLOYEE';
-    const employees = await prisma.employee.findMany({ where: isManagement ? {} : { id: req.user.id }, include: { attendance: { where: { clockOut: { not: null } }, include: { breaks: true } } } });
+    const isAdmin = req.user.role === 'ADMIN';
+    const isManager = req.user.role === 'MANAGER';
+    
+    // Fallback for siteId if missing from token
+    let currentSiteId = req.user.siteId;
+    if (isManager && !currentSiteId) {
+      const me = await prisma.employee.findUnique({ where: { id: req.user.id } });
+      currentSiteId = me?.siteId;
+    }
+
+    let where: any = {};
+    if (isManager) {
+      where = { 
+        siteId: currentSiteId,
+        role: { not: 'ADMIN' }
+      };
+      if (!currentSiteId) where.id = req.user.id;
+    } else if (!isAdmin) {
+      where = { id: req.user.id };
+    }
+
+    const employees = await prisma.employee.findMany({ 
+      where, 
+      include: { attendance: { where: { clockOut: { not: null } }, include: { breaks: true } } } 
+    });
 
     const data = employees.map(emp => {
       let totalMins = 0, otMins = 0, rate = emp.hourlyRate || 25;
@@ -584,7 +703,8 @@ app.get('/api/payroll', authenticateToken, async (req: any, res: Response) => {
       const th = totalMins / 60, oh = otMins / 60, rh = th - oh;
       let earn = rh * rate;
       earn += (emp.overtimeType === 'MULTIPLIER' ? oh * rate * (emp.overtimeValue || 1.5) : oh * (emp.overtimeValue || 20));
-      return { id: emp.id, employee: emp, regularHours: rh.toFixed(1), overtimeHours: oh.toFixed(1), totalHours: th.toFixed(1), earnings: earn.toFixed(2), status: 'PENDING' };
+      const status = emp.attendance.length > 0 && emp.attendance.every(log => log.status === 'PAID') ? 'PAID' : 'PENDING';
+      return { id: emp.id, employee: emp, regularHours: rh.toFixed(1), overtimeHours: oh.toFixed(1), totalHours: th.toFixed(1), earnings: earn.toFixed(2), status };
     });
     res.json(data);
   } catch (error) {
@@ -594,7 +714,12 @@ app.get('/api/payroll', authenticateToken, async (req: any, res: Response) => {
 
 app.post('/api/payroll/process', authenticateToken, requireManagement, async (req, res) => {
   try {
-    await prisma.attendance.updateMany({ where: { status: 'PENDING' }, data: { status: 'PAID' } });
+    await prisma.attendance.updateMany({ 
+      where: { 
+        status: { in: ['PENDING', 'PRESENT', 'APPROVED'] } 
+      }, 
+      data: { status: 'PAID' } 
+    });
     res.json({ message: 'Processed' });
   } catch (error) {
     res.status(500).json({ error: 'Process failed' });
@@ -603,8 +728,23 @@ app.post('/api/payroll/process', authenticateToken, requireManagement, async (re
 
 app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response) => {
   try {
-    const isMgmt = req.user.role !== 'EMPLOYEE';
-    const logs = await prisma.attendance.findMany({ where: { clockOut: { not: null }, ...(isMgmt ? {} : { employeeId: req.user.id }) }, include: { employee: true, breaks: true } });
+    const isAdmin = req.user.role === 'ADMIN';
+    const isManager = req.user.role === 'MANAGER';
+    
+    let currentSiteId = req.user.siteId;
+    if (isManager && !currentSiteId) {
+      const me = await prisma.employee.findUnique({ where: { id: req.user.id } });
+      currentSiteId = me?.siteId;
+    }
+
+    const where = isAdmin ? { clockOut: { not: null } } : 
+                  isManager ? { clockOut: { not: null }, siteId: currentSiteId, employee: { role: { not: 'ADMIN' } } } : 
+                  { clockOut: { not: null }, employeeId: req.user.id };
+
+    const logs = await prisma.attendance.findMany({ 
+      where, 
+      include: { employee: true, breaks: true } 
+    });
 
     let cost = 0, hours = 0;
     logs.forEach(l => {
@@ -613,7 +753,12 @@ app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response)
       cost += (h * (l.employee?.hourlyRate || 25));
     });
 
-    res.json({ totalPayout: cost.toFixed(2), totalHours: hours.toFixed(1), activeRecipients: isMgmt ? logs.length : 1 });
+    const activeEmployeeIds = new Set(logs.map(l => l.employeeId));
+    res.json({ 
+      totalPayout: cost.toFixed(2), 
+      totalHours: hours.toFixed(1), 
+      activeRecipients: (isAdmin || isManager) ? activeEmployeeIds.size : 1 
+    });
   } catch (error) {
     res.status(500).json({ error: 'Stats failed' });
   }
@@ -623,17 +768,29 @@ app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response)
 
 app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
   try {
-    const isMgmt = req.user.role !== 'EMPLOYEE';
+    const isAdmin = req.user.role === 'ADMIN';
+    const isManager = req.user.role === 'MANAGER';
+    const isMgmt = isAdmin || isManager;
     
     // 1. Core Counts
-    const totalEmployees = await prisma.employee.count();
-    const activeNow = await prisma.attendance.count({ where: { clockOut: null } });
-    const totalSites = await prisma.site.count();
+    const totalEmployees = await prisma.employee.count({ 
+      where: isManager ? { siteId: req.user.siteId } : (isAdmin ? {} : { id: req.user.id }) 
+    });
+    const activeNow = await prisma.attendance.count({ 
+      where: { 
+        clockOut: null, 
+        ...(isManager ? { siteId: req.user.siteId } : (isAdmin ? {} : { employeeId: req.user.id })) 
+      } 
+    });
+    const totalSites = isAdmin ? await prisma.site.count() : (isManager ? 1 : 0);
     
     // 2. Site Performance (Active employees per site)
     const sitePerformanceRaw = await prisma.attendance.groupBy({
       by: ['siteId'],
-      where: { clockOut: null },
+      where: { 
+        clockOut: null,
+        ...(isManager ? { siteId: req.user.siteId } : (isAdmin ? {} : { employeeId: req.user.id }))
+      },
       _count: { id: true }
     });
 
@@ -656,7 +813,7 @@ app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
       const count = await prisma.attendance.count({
         where: {
           date: { gte: start, lte: end },
-          ...(isMgmt ? {} : { employeeId: req.user.id })
+          ...(isManager ? { siteId: req.user.siteId } : (isAdmin ? {} : { employeeId: req.user.id }))
         }
       });
       
