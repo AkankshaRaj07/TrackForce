@@ -1,21 +1,22 @@
 .app-container {
   display: flex;
-  flex-direction: column;
   height: 100vh;
-  width: 100%;
+  width: 100vw;
+  max-width: 100%;
   background-color: var(--bg);
   overflow: hidden;
   position: relative;
 }
 
-.layout-body {
-  display: flex;
+.main-view-wrapper {
   flex: 1;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 0; /* Important for flexbox to shrink below content width */
+  height: 100vh;
   overflow: hidden;
-  position: relative;
 }
-
 
 .sidebar-overlay {
   display: none;
@@ -31,46 +32,38 @@
 }
 
 .sidebar-wrapper {
-  width: 280px;
+  width: 260px;
   flex-shrink: 0;
-  height: calc(100vh - 150px);
-  position: fixed;
-  left: 12px;
-  top: 94px; /* 70px topbar + 24px gap */
-  z-index: 1100;
+  height: 100vh;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.3s ease;
-  padding: 0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06),
-              0 2px 8px rgba(0, 0, 0, 0.04);
+  border-right: 1px solid var(--border);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1100;
   overflow: hidden;
 }
 
+.sidebar-wrapper.collapsed {
+  width: 80px;
+}
+
 [data-theme='dark'] .sidebar-wrapper {
-  background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-              0 2px 8px rgba(0, 0, 0, 0.2);
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 @media (max-width: 1024px) {
   .sidebar-wrapper {
     position: fixed;
-    left: 8px;
-    top: 78px; /* 70px Topbar + 8px gap */
-    height: calc(100vh - 94px);
-    transform: translateX(calc(-100% - 16px));
-    border-radius: 20px;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+    box-shadow: none;
   }
 
   .sidebar-wrapper.mobile-open {
     transform: translateX(0);
-    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.4);
+    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -81,24 +74,15 @@
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  margin-left: 304px;
-  /* 280px sidebar + 12px left offset + 12px gap */
   background: var(--bg);
-}
-
-@media (max-width: 1024px) {
-  .main-stage {
-    margin-left: 0;
-  }
 }
 
 .content-area {
   flex: 1;
-  padding: 24px 48px;
-  /* High-fidelity horizontal and vertical breathing room */
+  padding: 32px 40px;
   overflow-y: auto;
-  max-width: 1600px;
-  /* Prevent over-stretching on ultra-wide displays */
+  overflow-x: hidden;
+  width: 100%;
 }
 
 @media (max-width: 768px) {

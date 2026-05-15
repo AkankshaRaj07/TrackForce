@@ -5,7 +5,8 @@ import {
   Clock,
   TrendingUp,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  Wallet
 } from 'lucide-react';
 import {
   XAxis,
@@ -25,303 +26,274 @@ import { useEffect, useState } from 'react';
 import { fetchStats } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
-const StatCard = ({ icon, label, value, trend, color, description }: any) => (
+const StatCard = ({ icon, label, value, trend, color, description, trendLabel }: any) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="glass-card command-card"
-    style={{ '--card-accent': color } as any}
+    className="watt-card stat-card"
   >
-    <div className="card-glow"></div>
-    <div className="card-content-elite">
-      <div className="icon-badge-premium">
+    <div className="stat-card-top">
+      <div className="stat-icon-box" style={{ backgroundColor: `${color}15`, color: color }}>
         {icon}
       </div>
-      <div className="stat-data">
-        <h2 className="stat-value-elite">{value}</h2>
-        <span className="stat-label-elite">{label}</span>
-      </div>
       {trend !== undefined && (
-        <div className={`trend-pill ${trend > 0 ? 'positive' : 'negative'}`}>
-          {trend > 0 ? <TrendingUp size={12} /> : <TrendingUp size={12} style={{ transform: 'rotate(90deg)' }} />}
-          {Math.abs(trend)}%
+        <div className="stat-trend-badge" style={{ backgroundColor: trend > 0 ? '#10B98115' : '#EF444415', color: trend > 0 ? '#10B981' : '#EF4444' }}>
+          <TrendingUp size={12} style={{ transform: trend > 0 ? 'none' : 'rotate(180deg)' }} />
+          <span>{Math.abs(trend)}%</span>
+        </div>
+      )}
+      {trendLabel && (
+        <div className="stat-trend-label">
+          {trendLabel}
         </div>
       )}
     </div>
-    {description && <p className="card-description-elite">{description}</p>}
+    <div className="stat-card-content">
+      <span className="stat-label">{label}</span>
+      <div className="stat-value-group">
+        <h2 className="stat-value">{value}</h2>
+        {description && <span className="stat-unit">{description}</span>}
+      </div>
+    </div>
   </motion.div>
 );
 
 const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchStats().then(setStats).catch(console.error);
+    setLoading(true);
+    fetchStats()
+      .then(setStats)
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleExport = () => {
-    exportToCSV([stats], 'Dashboard_Stats');
-  };
-
-  const isAdmin = user?.role === 'ADMIN';
-  const isManager = user?.role === 'MANAGER';
-  const isManagement = isAdmin || isManager;
-
+  const isManagement = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const chartData = stats?.weeklyTrend || [];
 
-  return (
-    <div className="dashboard-container-elite">
-      <header className="command-header">
-        <div className="identity-section">
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="user-avatar-elite"
-          >
-            <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.firstName}`} alt="User" />
-            <div className="status-ring"></div>
-          </motion.div>
-          <div className="welcome-text">
-            <h1>{t('welcomeBack')}, {user?.firstName}</h1>
-            <div className="role-chip">
-              <Activity size={12} />
-              <span>{user?.role} STATUS: OPTIMIZED</span>
-            </div>
-          </div>
+  const formatTime = (timeStr: string) => {
+    try {
+      const date = new Date(timeStr);
+      return isNaN(date.getTime()) ? timeStr : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return timeStr || '--:--';
+    }
+  };
+
+  if (loading && !stats) {
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner-watt"></div>
+        <p>Synchronizing Intelligence...</p>
+      </div>
+    );
+  }
+
+  if (!loading && !stats) {
+    return (
+      <div className="dashboard-watt">
+        <header className="dashboard-header">
+          <h1 className="page-title">System Overview</h1>
+        </header>
+        <div className="watt-card error-state">
+          <Activity size={48} color="#EF4444" />
+          <h3>Connectivity Interrupted</h3>
+          <p>We're unable to sync with the intelligence grid. Please verify your credentials or network status.</p>
+          <button className="watt-btn primary" onClick={() => window.location.reload()}>
+            Retry Sync
+          </button>
         </div>
-        
-        <div className="action-hub-elite">
-          {isManagement && (
-            <button className="btn btn-secondary-elite" onClick={handleExport}>
-              <CheckCircle2 size={16} /> {t('exportReport')}
-            </button>
-          )}
-          <button className="btn btn-primary-elite" onClick={() => isManagement ? navigate('/sites') : navigate('/attendance')}>
-            {isManagement ? t('manageSites') : "Go to Terminal"}
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-watt">
+      <header className="dashboard-header">
+        <div className="header-titles">
+          <h1 className="page-title">System Overview</h1>
+          <p className="page-subtitle">Real-time intelligence from your workforce grid.</p>
+        </div>
+        <div className="header-actions">
+          <button className="watt-btn secondary">
+            <Clock size={18} />
+            <span>Last 24 Hours</span>
+          </button>
+          <button className="watt-btn primary" onClick={() => stats && exportToCSV([stats], 'Dashboard_Stats')}>
+            <CheckCircle2 size={18} />
+            <span>Export Data</span>
           </button>
         </div>
       </header>
 
-      <div className="hero-insight-banner">
-        <div className="insight-content">
-          <div className="insight-icon">
-            <Activity size={32} />
-          </div>
-          <div className="insight-text">
-            <h3>Operational Overview</h3>
-            <p>{isManagement ? "Workforce efficiency is up 12% this week across all active sites." : "You've achieved 98% attendance accuracy this month. Keep it up!"}</p>
-          </div>
-        </div>
-        <div className="insight-visual">
-          <div className="pulse-circle"></div>
-          <div className="pulse-circle delay-1"></div>
-        </div>
-      </div>
-
-      {!isManagement && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`security-status-banner ${user?.isBiometricEnrolled ? 'verified' : 'unverified'}`}
-        >
-          <div className="banner-content">
-            <CheckCircle2 size={18} className="shield-icon" />
-            <div>
-              <strong>{user?.isBiometricEnrolled ? "Biometric Security Active" : "Action Required: Biometric Enrollment"}</strong>
-              <p>{user?.isBiometricEnrolled
-                ? "Your identity is protected by facial recognition protocols."
-                : "Complete enrollment in the Attendance section to secure your account."}
-              </p>
-            </div>
-          </div>
-          {!user?.isBiometricEnrolled && (
-            <button className="btn btn-sm btn-primary" onClick={() => navigate('/attendance')}>
-              Enroll Now
-            </button>
-          )}
-        </motion.div>
-      )}
-
-      <section className="intelligence-grid">
+      <section className="stats-grid-watt">
         <StatCard
           icon={<Users size={20} />}
-          label={isManagement ? t('totalWorkforce') : t('myWeeklyHours')}
-          value={isManagement ? (stats?.totalEmployees || 0) : (stats?.weeklyHours || "0.0")}
-          trend={12.5}
-          color="#568F87"
-          description={isManagement ? "Active personnel across all sectors" : "Total logged duration this period"}
+          label={isManagement ? "Total Workforce" : "Weekly Hours"}
+          value={isManagement ? (stats?.totalEmployees ?? 0) : (stats?.weeklyHours ?? "0.0")}
+          trend={4.2}
+          color="#3B82F6"
+          description={isManagement ? "" : "hours"}
         />
         <StatCard
           icon={<Activity size={20} />}
-          label={isManagement ? t('currentAttendance') : t('myEfficiency')}
-          value={isManagement ? `${stats?.activeNow || 0}` : `${stats?.efficiency || 0}%`}
-          trend={3.2}
-          color="#F5BABB"
-          description={isManagement ? "Employees currently on-site" : "Relative productivity score"}
+          label={isManagement ? "Active Now" : "Efficiency"}
+          value={isManagement ? (stats?.activeNow ?? 0) : `${stats?.efficiency ?? 0}%`}
+          trend={1.8}
+          color="#10B981"
+          description={isManagement ? "personnel" : ""}
         />
         <StatCard
-          icon={<MapPin size={20} />}
-          label={isManagement ? t('operationalSites') : t('activeSite')}
-          value={isManagement ? (stats?.sites || 0) : (stats?.activeSite || user?.site?.name || 'Assigned Site')}
-          color="#568F87"
-          description={isManagement ? "Active geofenced locations" : "Your current base of operations"}
+          icon={<TrendingUp size={20} />}
+          label="Operational Efficiency"
+          value="94.2"
+          color="#F59E0B"
+          description="%"
+          trendLabel="Stable"
         />
         <StatCard
-          icon={<Clock size={20} />}
-          label={isManagement ? t('avgShiftDuration') : t('totalEarnings')}
-          value={isManagement ? `${stats?.avgShift || 0}h` : `${(stats?.earnings || 0).toLocaleString()} ₫`}
-          trend={-1.2}
-          color="#F5BABB"
-          description={isManagement ? "Mean time per operational cycle" : "Estimated payout for active period"}
+          icon={<Wallet size={20} />}
+          label={isManagement ? "Est. Payroll" : "Total Earnings"}
+          value={isManagement ? "42.5" : (stats?.earnings ?? 0).toLocaleString()}
+          color="#8B5CF6"
+          description={isManagement ? "k" : "₫"}
+          trendLabel="Proj. $840"
         />
       </section>
 
-      {isManagement ? (
-      <div className="intelligence-main-grid">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card metrics-chart-card"
-        >
-          <div className="card-header-elite">
-            <div className="title-group">
-              <TrendingUp size={18} className="header-icon" />
-              <h3>Attendance Trajectory</h3>
-            </div>
-            <div className="chart-legend-elite">
-              <span className="legend-item"><span className="dot primary"></span> Active Capacity</span>
+      <div className="main-charts-grid">
+        <div className="watt-card chart-main">
+          <div className="card-header-watt">
+            <h3 className="card-title">Workforce Activity Over Time</h3>
+            <div className="chart-legend-watt">
+              <span className="legend-item"><span className="dot active"></span> Active Load</span>
+              <span className="legend-item"><span className="dot baseline"></span> Baseload</span>
             </div>
           </div>
-          <div className="chart-container-elite">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#568F87" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#568F87" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
-                <Tooltip 
-                  contentStyle={{ background: '#064232', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
-                  itemStyle={{ color: '#F5BABB' }}
-                />
-                <Area type="monotone" dataKey="attendance" stroke="#568F87" fillOpacity={1} fill="url(#colorAttendance)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="chart-wrapper-watt" style={{ minHeight: '320px' }}>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={320}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="wattBlue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748B', fontSize: 12, fontWeight: 500}} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#64748B', fontSize: 12, fontWeight: 500}} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                      padding: '12px'
+                    }} 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="attendance" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#wattBlue)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="empty-chart-state">No trend data available for this period.</div>
+            )}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card site-performance-card"
-        >
-          <div className="card-header-elite">
-            <div className="title-group">
-              <Activity size={18} className="header-icon" />
-              <h3>Site Operations</h3>
-            </div>
+        <div className="watt-card asset-distribution">
+          <div className="card-header-watt">
+            <h3 className="card-title">Activity by Site</h3>
           </div>
-          <div className="site-ops-list">
+          <div className="asset-list">
             {(stats?.sitePerformance || []).length > 0 ? (stats?.sitePerformance || []).map((site: any, idx: number) => (
-              <div key={idx} className="site-op-item">
-                <div className="site-op-header">
-                  <span className="site-op-name">{site.name}</span>
-                  <span className="site-op-status">{site.count} ACTIVE</span>
+              <div key={idx} className="asset-item">
+                <div className="asset-info">
+                  <span className="asset-name">{site.name}</span>
+                  <span className="asset-value">{site.count} ACTIVE</span>
                 </div>
-                <div className="site-op-progress">
+                <div className="asset-progress-bg">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(site.count * 10, 100)}%` }}
-                    className="site-op-fill"
-                  ></motion.div>
+                    className="asset-progress-fill"
+                    transition={{ duration: 1, ease: "easeOut" }}
+                  />
                 </div>
               </div>
             )) : (
-              <div className="empty-state-elite">No active site data available</div>
+              <div className="empty-asset-state">No active site sessions detected.</div>
             )}
           </div>
-        </motion.div>
-      </div>
-      ) : (
-        <div className="intelligence-main-grid">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="glass-card metrics-chart-card"
-          >
-            <div className="card-header-elite">
-              <div className="title-group">
-                <TrendingUp size={18} className="header-icon" />
-                <h3>Personal Progress</h3>
-              </div>
-            </div>
-            <div className="chart-container-elite">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorPersonal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#F5BABB" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#F5BABB" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-dim)', fontSize: 12}} />
-                  <Tooltip 
-                    contentStyle={{ background: '#064232', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
-                    itemStyle={{ color: '#F5BABB' }}
-                  />
-                  <Area type="monotone" dataKey="attendance" stroke="#F5BABB" fillOpacity={1} fill="url(#colorPersonal)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="glass-card site-performance-card"
-          >
-            <div className="card-header-elite">
-              <div className="title-group">
-                <Activity size={18} className="header-icon" />
-                <h3>Recent Activity</h3>
-              </div>
-            </div>
-            <div className="notifications-list-premium">
-              {(stats?.recentLogs || []).length > 0 ? (
-                stats.recentLogs.map((log: any, idx: number) => (
-                  <div key={idx} className="notification-item-premium">
-                    <div className={`n-icon ${log.type === 'ALERT' ? 'alert' : 'approved'}`}>
-                      {log.type === 'ALERT' ? <Clock size={16} /> : <CheckCircle2 size={16} />}
-                    </div>
-                    <div className="n-text">
-                      <strong>{log.title}</strong>
-                      <p>{log.message}</p>
-                      <span>{new Date(log.time).toLocaleTimeString()}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state-elite">No recent activity detected</div>
-              )}
-            </div>
-          </motion.div>
         </div>
-      )}
+      </div>
 
+      <div className="watt-card recent-events">
+        <div className="card-header-watt">
+          <h3 className="card-title">Recent Activity Logs</h3>
+          <div className="header-controls">
+            <button className="icon-btn-small"><TrendingUp size={16} /></button>
+            <button className="icon-btn-small"><Clock size={16} /></button>
+          </div>
+        </div>
+        <div className="events-table-wrapper">
+          { (stats?.recentLogs || []).length > 0 ? (
+          <table className="events-table">
+            <thead>
+              <tr>
+                <th>TIMESTAMP</th>
+                <th>ENTITY</th>
+                <th>EVENT TYPE</th>
+                <th>STATUS</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.recentLogs.map((log: any, idx: number) => (
+                <tr key={idx}>
+                  <td className="timestamp">{formatTime(log.time)}</td>
+                  <td className="entity">{log.title}</td>
+                  <td className="event-type">{log.type}</td>
+                  <td>
+                    <span className={`status-pill ${log.type === 'ALERT' ? 'warning' : 'success'}`}>
+                      {log.type === 'ALERT' ? 'Pending' : 'Verified'}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="table-action-btn">View Details</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          ) : (
+            <div className="empty-table-state">No recent activity logged in the system.</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
-
-
 
 export default Dashboard;

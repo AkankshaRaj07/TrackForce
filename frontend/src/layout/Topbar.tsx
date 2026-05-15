@@ -1,9 +1,11 @@
 import { 
   Sun, 
   Moon, 
-  LogOut, 
   Menu, 
   Globe,
+  Bell,
+  HelpCircle,
+  Search
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,13 +15,9 @@ import './Topbar.css';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-
-
 const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
-
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
@@ -34,33 +32,37 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
     <header className="topbar">
       <button className="mobile-menu-btn" onClick={onMenuClick}>
         <Menu size={24} />
       </button>
       
-      <div className="logo-brand desktop-only">
-        <div className="logo-text">TRACK<span>FORCE</span></div>
+      <div className="search-section">
+        <div className="search-box">
+          <Search size={18} className="search-icon" />
+          <input type="text" placeholder="Search insights..." className="search-input" />
+        </div>
       </div>
 
-      <div className="topbar-spacer"></div>
-
       <div className="topbar-actions">
-        <button className="action-btn" onClick={toggleTheme} title="Toggle Appearance">
+        <button className="icon-btn" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
+        <button className="icon-btn">
+          <Bell size={20} />
+          <span className="notification-dot"></span>
+        </button>
+
+        <button className="icon-btn">
+          <HelpCircle size={20} />
         </button>
 
         <div className="lang-dropdown-wrapper" ref={langRef}>
           <button 
-            className={`action-btn ${showLangDropdown ? 'active' : ''}`} 
+            className={`icon-btn ${showLangDropdown ? 'active' : ''}`} 
             onClick={() => setShowLangDropdown(!showLangDropdown)}
-            title="Change Language"
           >
             <Globe size={20} />
           </button>
@@ -82,19 +84,14 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             </div>
           )}
         </div>
-
-        {/* Logout Node */}
-        <button className="action-btn logout-btn" onClick={handleLogout} title="Logout Session">
-          <LogOut size={20} />
-        </button>
         
-        <div className="user-profile">
-          <div className="user-info">
-            <span className="user-name">{user ? `${user.firstName} ${user.lastName}` : 'Guest'}</span>
-            <span className="user-role-badge">{user?.role || 'Guest'}</span>
-          </div>
+        <div className="user-profile-mini">
+          <img 
+            src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.firstName}`} 
+            alt="User" 
+            className="user-avatar-mini"
+          />
         </div>
-
       </div>
     </header>
   );

@@ -1,48 +1,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
+* {
+  box-sizing: border-box;
+}
+
 @import './components/Modal.css';
 
 :root {
-  /* Rose & Forest Palette from Color Hunt */
-  --primary: #568F87; /* Sage Teal */
-  --primary-hover: #45756e;
-  --primary-glow: rgba(86, 143, 135, 0.2);
-  --accent: #F5BABB; /* Soft Rose */
-  --accent-glow: rgba(245, 186, 187, 0.15);
+  /* WattVision Inspired Palette */
+  --primary: #3B82F6; /* Bright Blue */
+  --primary-hover: #2563EB;
+  --primary-glow: rgba(59, 130, 246, 0.15);
   
-  --bg: #FFF5F2; /* Soft Peach White */
+  --accent: #10B981; /* Emerald Success */
+  --accent-glow: rgba(16, 185, 129, 0.1);
+  
+  --bg: #F8FAFC; /* Slate 50 - Very light grey/blue */
   --surface: #ffffff;
-  --surface-hover: rgba(86, 143, 135, 0.04);
+  --surface-hover: #F1F5F9;
   --surface-bright: #ffffff;
   
-  --text-main: #064232; /* Deep Forest as text in light mode */
-  --text-primary: #064232;
-  --text-secondary: #568f87;
-  --text-tertiary: #f5babb;
-  --text-dim: #64748b;
+  --text-main: #1E293B; /* Slate 800 */
+  --text-primary: #0F172A; /* Slate 900 */
+  --text-secondary: #64748B; /* Slate 500 */
+  --text-tertiary: #94A3B8; /* Slate 400 */
+  --text-dim: #94A3B8;
   
-  --border: rgba(6, 66, 50, 0.1);
-  --glass-border: rgba(6, 66, 50, 0.12);
-  --glass: rgba(255, 255, 255, 0.85);
+  --border: #E2E8F0; /* Slate 200 */
+  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass: rgba(255, 255, 255, 0.95);
   
-  --success: #568f87;
-  --error: #ef4444;
-  --warning: #f5babb;
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
   
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.05), 0 12px 24px rgba(0, 0, 0, 0.03);
   
-  --glass-blur: blur(20px);
+  --glass-blur: blur(8px);
   --ease-premium: cubic-bezier(0.4, 0, 0.2, 1);
   
-  --mesh: radial-gradient(at 0% 0%, rgba(245, 186, 187, 0.1) 0%, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(86, 143, 135, 0.08) 0%, transparent 50%),
-    linear-gradient(to bottom right, #FFF5F2, #fdf4f1);
+  --mesh: none; /* Cleaner background for WattVision */
 
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
   --spacing-sm: 8px;
@@ -50,35 +54,31 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s ease;
+  --transition-slow: 0.3s ease;
 }
 
 [data-theme='dark'] {
-  --bg: #042d22; /* Deep Forest Green Base */
-  --surface: #021a14; /* Near-Black Forest Surface */
-  --surface-hover: rgba(86, 143, 135, 0.1);
-  --surface-bright: #053a2d;
+  --bg: #0F172A;
+  --surface: #1E293B;
+  --surface-hover: #334155;
+  --surface-bright: #334155;
   
-  --border: rgba(86, 143, 135, 0.2);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass: rgba(2, 26, 20, 0.9);
+  --border: #334155;
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass: rgba(30, 41, 59, 0.9);
   
-  --primary: #F5BABB; /* Vibrant Rose */
-  --primary-glow: rgba(245, 186, 187, 0.3);
-  --accent: #568F87; /* Sage Accent */
+  --primary: #60A5FA;
+  --primary-glow: rgba(96, 165, 250, 0.3);
   
-  --text-main: #fdf4f1;
-  --text-primary: #ffffff;
-  --text-secondary: #a8c6c1;
-  --text-tertiary: #f5babb;
-  --text-dim: #a8c6c1; /* Lighter Sage for better contrast */
+  --text-main: #F1F5F9;
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-dim: #64748B;
   
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-  
-  --mesh: radial-gradient(at 0% 0%, rgba(245, 186, 187, 0.15) 0%, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(86, 143, 135, 0.1) 0%, transparent 50%);
 }
 
 
