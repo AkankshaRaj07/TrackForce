@@ -1072,9 +1072,12 @@ const Attendance = () => {
 
   const filteredAllLogs = allLogs.filter(log => {
     // 1. Date filter
+    const dateObj = new Date(log.date);
+    const logDateStr = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+    
     const matchesDate = activeView === 'grid' 
-      ? log.date.startsWith(selectedMonth)
-      : log.date.startsWith(selectedDate);
+      ? logDateStr.startsWith(selectedMonth)
+      : logDateStr === selectedDate;
     
     if (!matchesDate) return false;
 

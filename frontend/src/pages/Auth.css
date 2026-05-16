@@ -439,3 +439,67 @@
     padding: 44px 14px 16px 14px;
   }
 }
+
+/* --- Light Mode Fixes --- */
+.auth-page.light {
+  --bg: #F8FAFC;
+  --text-primary: #0F172A;
+  --auth-subtext: #64748B;
+  --auth-label: #475569;
+  --border: #E2E8F0;
+  --surface: #FFFFFF;
+  --glass: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
+.auth-page.light .auth-card-premium {
+  background: white;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.06);
+}
+
+.auth-page.light .auth-card-premium::after {
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.5;
+}
+
+.auth-page.light .logo-text {
+  color: #0F172A;
+}
+
+.auth-page.light .input-wrapper-premium input {
+  background: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+.auth-page.light .input-wrapper-premium input:focus {
+  background: #FFFFFF !important;
+  border-color: var(--primary) !important;
+}
+
+.auth-page.light .auth-divider span {
+  background: white;
+  color: #94A3B8;
+}
+
+.auth-page.light .auth-divider::before,
+.auth-page.light .auth-divider::after {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.auth-page.light .toolbar-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #0F172A;
+}
+
+.auth-page.light .btn-ghost-premium {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+.auth-page.light .checkbox-label {
+  color: #64748B;
+}
+

@@ -108,7 +108,9 @@ const AttendanceGrid: React.FC = () => {
         const dayLogs = allLogs.filter(l => {
           if (!l.date || l.employeeId !== emp.id) return false;
           try {
-            return new Date(l.date).toISOString().split('T')[0] === dateStr;
+            const dateObj = new Date(l.date);
+            const lDateStr = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+            return lDateStr === dateStr;
           } catch (e) { return false; }
         });
         
@@ -299,7 +301,8 @@ const AttendanceGrid: React.FC = () => {
                       const dayLogs = allLogs.filter(l => {
                         if (!l.date || l.employeeId !== emp.id) return false;
                         try {
-                          const logDateStr = new Date(l.date).toISOString().split('T')[0];
+                          const dateObj = new Date(l.date);
+                          const logDateStr = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
                           return logDateStr === dateStr;
                         } catch (e) { return false; }
                       });
