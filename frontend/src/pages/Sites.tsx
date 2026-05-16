@@ -82,6 +82,8 @@ const Sites = () => {
 
   useEffect(() => {
     loadSites();
+    const interval = setInterval(loadSites, 60000); // Refresh every 1m
+    return () => clearInterval(interval);
   }, []);
 
   const loadSites = async () => {

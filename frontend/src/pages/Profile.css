@@ -1,0 +1,442 @@
+.profile-page {
+  padding: var(--spacing-xl);
+  min-height: calc(100vh - 80px);
+  background: var(--bg);
+  background-image: var(--mesh);
+  background-attachment: fixed;
+  color: var(--text-main);
+  transition: background 0.4s ease, color 0.4s ease;
+  overflow-x: hidden;
+}
+
+.profile-page.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Hero Section Overhaul */
+.profile-hero-section {
+  position: relative;
+  padding: 60px 40px;
+  border-radius: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 40px;
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-background-mesh {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 70% 30%, var(--primary-glow) 0%, transparent 70%);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.avatar-main {
+  width: 100%;
+  height: 100%;
+  border-radius: 40px;
+  overflow: hidden;
+  border: 4px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-hover);
+  position: relative;
+}
+
+.avatar-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-status-ring {
+  position: absolute;
+  inset: -10px;
+  border: 2px dashed var(--primary);
+  border-radius: 50px;
+  opacity: 0.2;
+  animation: spin 20s linear infinite;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 36px;
+  height: 36px;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-premium);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.avatar-edit-btn:hover {
+  transform: scale(1.1) rotate(15deg);
+}
+
+.hero-text-node h1 {
+  font-size: 42px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: -1.5px;
+  color: var(--text-primary);
+}
+
+.hero-meta-badges {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.badge-premium {
+  padding: 6px 16px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  backdrop-filter: blur(8px);
+}
+
+.badge-premium.role {
+  background: var(--primary-glow);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.badge-premium.id {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.badge-premium.status.verified {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+  border: 1px solid #10B981;
+}
+
+.badge-premium.status.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+  border: 1px solid #F59E0B;
+}
+
+/* Grid Layout */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 32px;
+}
+
+.profile-section {
+  padding: 32px;
+  margin-bottom: 32px;
+  border-radius: 28px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+/* Creative Info Nodes */
+.info-grid-creative {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.info-node-creative {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-hover);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  transition: all 0.3s var(--ease-premium);
+}
+
+.info-node-creative:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.node-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--surface);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.node-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.node-text label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.node-text span {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Settings List Creative */
+.settings-list-creative {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-item-node {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--surface-hover);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.item-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.password-mask-node {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  padding: 4px 4px 4px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.password-mask-node input {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: monospace;
+  width: 120px;
+  outline: none;
+}
+
+.password-mask-node button {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.creative-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  outline: none;
+}
+
+.creative-toggle {
+  width: 48px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  padding: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+}
+
+.creative-toggle.active {
+  background: var(--primary);
+}
+
+.toggle-knob {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s var(--ease-premium);
+}
+
+.creative-toggle.active .toggle-knob {
+  transform: translateX(24px);
+}
+
+/* Manifest List */
+.manifest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manifest-item {
+  padding: 16px;
+  background: var(--surface-hover);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.manifest-item .m-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.manifest-item .m-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.profile-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 16px;
+  }
+
+  .profile-hero-section {
+    padding: 40px 20px;
+    border-radius: 24px;
+    margin-bottom: 24px;
+  }
+
+  .hero-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .hero-text-node h1 {
+    font-size: 32px;
+  }
+
+  .hero-meta-badges {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .info-grid-creative {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-section {
+    padding: 24px 20px;
+  }
+
+  .settings-item-node {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .password-mask-node {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .password-mask-node input {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-avatar-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+
+  .hero-text-node h1 {
+    font-size: 28px;
+  }
+
+  .badge-premium {
+    font-size: 10px;
+    padding: 4px 12px;
+  }
+}

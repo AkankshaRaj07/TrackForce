@@ -5,15 +5,15 @@ import {
   MapPin, 
   Wallet, 
   Building2, 
-  Settings, 
   Calendar,
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  UserCheck
+  UserCheck,
+  User
 } from 'lucide-react';
 
-import { NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -26,6 +26,7 @@ interface SidebarProps {
 
 const Sidebar = ({ onClose, collapsed, onToggleCollapse }: SidebarProps) => {
   const { user, isAdmin, logout } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
 
   const { t } = useTranslation();
   const isManager = user?.role === 'MANAGER' || isAdmin;
@@ -36,9 +37,9 @@ const Sidebar = ({ onClose, collapsed, onToggleCollapse }: SidebarProps) => {
     { icon: <Calendar size={20} />, label: t('attendance'), path: '/attendance' },
     ...(isManager ? [{ icon: <UserCheck size={20} />, label: 'Site Attendance', path: '/attendance/manager' }] : []),
     ...(isAdmin ? [{ icon: <MapPin size={20} />, label: t('tracking'), path: '/tracking' }] : []),
-    ...(isAdmin ? [{ icon: <Wallet size={20} />, label: t('payroll'), path: '/payroll' }] : []),
+    { icon: <Wallet size={20} />, label: isEmployee ? 'Payroll History' : t('payroll'), path: '/payroll' },
     { icon: <Building2 size={20} />, label: t('sites'), path: '/sites' },
-    { icon: <Settings size={20} />, label: t('settings'), path: '/settings' },
+    { icon: <User size={20} />, label: 'Profile', path: '/profile' },
   ];
 
   return (
@@ -64,11 +65,10 @@ const Sidebar = ({ onClose, collapsed, onToggleCollapse }: SidebarProps) => {
       <nav className="nav-menu">
         {!collapsed && <div className="nav-section-label">Main Menu</div>}
         {menuItems.map((item) => (
-          <NavLink 
+          <Link 
             key={item.path} 
             to={item.path}
-            end={item.path === '/attendance'}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            className={`nav-item ${window.location.pathname === item.path ? 'active' : ''}`}
             onClick={() => window.innerWidth < 1024 && onClose?.()}
             title={collapsed ? item.label : ''}
           >
@@ -76,7 +76,7 @@ const Sidebar = ({ onClose, collapsed, onToggleCollapse }: SidebarProps) => {
               {item.icon}
             </div>
             {!collapsed && <span>{item.label}</span>}
-          </NavLink>
+          </Link>
         ))}
       </nav>
 

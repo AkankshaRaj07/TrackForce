@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 
-import { clockIn, deleteAttendance, fetchTodayLogs, fetchAllLogs, updateAttendanceStatus, clockOut, startBreak, endBreak, enrollBiometric, createSecurityAlert, fetchEmployees, fetchSites, logManualAttendance, updateAttendanceTimes } from '../api/api';
+import { clockIn, deleteAttendance, fetchTodayLogs, fetchAllLogs, updateAttendanceStatus, clockOut, enrollBiometric, createSecurityAlert, fetchEmployees, fetchSites, logManualAttendance, updateAttendanceTimes } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
@@ -36,6 +36,7 @@ import type { ToastType } from '../components/Toast';
 
 import { loadFaceApiModels, areModelsLoaded } from '../utils/aiModels';
 import './Attendance.css';
+import EmployeeAttendance from './EmployeeAttendance';
 
 
 
@@ -74,7 +75,7 @@ const Attendance = () => {
   const [allLogs, setAllLogs] = useState<any[]>([]);
   const [activeView, setActiveView] = useState<'timecard' | 'timeline' | 'grid'>('timecard');
 
-  const [isOnBreak, setIsOnBreak] = useState(false);
+
   const [toasts, setToasts] = useState<any[]>([]);
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
   const [logToPurge, setLogToPurge] = useState<string | null>(null);
@@ -225,12 +226,7 @@ const Attendance = () => {
     return () => clearInterval(interval);
   }, [user, isManagement]);
 
-  useEffect(() => {
-    if (isClockedIn && logs[0].breaks) {
-      const activeBreak = logs[0].breaks.find((b: any) => !b.endTime);
-      setIsOnBreak(!!activeBreak);
-    }
-  }, [logs, isClockedIn]);
+
 
   const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED' | 'PRESENT' | 'ABSENT') => {
     try {
@@ -263,22 +259,7 @@ const Attendance = () => {
     }
   };
 
-  const handleToggleBreak = async () => {
-    if (!user) return;
-    try {
-      if (isOnBreak) {
-        await endBreak(user.id);
-        addToast("Break ended!", 'success');
-      } else {
-        await startBreak(user.id);
-        addToast("Break started!", 'info');
-      }
-      const updatedLogs = await fetchTodayLogs(user.id);
-      setLogs(updatedLogs);
-    } catch (err: any) {
-      addToast(err.message, 'error');
-    }
-  };
+
 
   const handleClockOut = async () => {
     if (!user) return;
@@ -521,9 +502,6 @@ const Attendance = () => {
           formData.append('latitude', latitude.toString());
           formData.append('longitude', longitude.toString());
           
-          // In direct clock-in, we use the user's avatar as proof if needed or just skip
-          // For now, let's just send the coordinates in a FormData for consistency
-          
           await clockIn(user.id, latitude, longitude, formData);
           setScanStatus('success');
           addToast("Management Override: Clock-in Successful.", 'success');
@@ -704,7 +682,6 @@ const Attendance = () => {
                           className="custom-calendar-popup glass-card"
                         >
                           <div className="calendar-grid-premium">
-                            {/* Simplified Calendar - Current Month Only for MVP */}
                             <div className="cal-header">
                               {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
                             </div>
@@ -936,17 +913,14 @@ const Attendance = () => {
               style={{ maxWidth: '400px' }}
             >
               <div className="modal-icon-header warning" style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--error)' }}>
-
                 <Trash2 size={64} />
               </div>
               <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>Confirm Data Purge</h3>
               <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', marginBottom: '2rem', lineHeight: '1.6' }}>
-
                 Are you sure you want to permanently delete this attendance record? This action will also remove all associated break data and cannot be undone.
               </p>
               <div className="modal-actions-premium" style={{ flexDirection: 'column', gap: '0.5rem' }}>
                 <button className="btn btn-primary btn-block btn-lg" style={{ backgroundColor: 'var(--error)' }} onClick={confirmPurge}>
-
                   Purge Record Permanently
                 </button>
                 <button className="btn btn-ghost btn-block" onClick={() => setShowPurgeConfirm(false)}>
@@ -1025,13 +999,13 @@ const Attendance = () => {
                     <p>Adjusting logs for {editingLog?.employee?.firstName} {editingLog?.employee?.lastName}</p>
                   </div>
                 </div>
-                <button className="btn-close-premium" onClick={() => setShowEditModal(false)}>
+                <button className="close-btn-premium" onClick={() => setShowEditModal(false)}>
                   <X size={20} />
                 </button>
               </div>
 
               <form onSubmit={handleEditSubmit} className="modal-body-premium">
-                <div className="form-row-premium">
+                <div className="form-row-premium" style={{ padding: '20px' }}>
                    <div className="form-group-premium">
                      <label>Check-in Time</label>
                      <input 
@@ -1054,7 +1028,7 @@ const Attendance = () => {
                    </div>
                 </div>
 
-                <div className="modal-actions-premium" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="modal-actions-premium" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 20px 20px' }}>
                   <button type="submit" className="btn btn-primary btn-block btn-lg">
                     Save Changes
                   </button>
@@ -1071,7 +1045,6 @@ const Attendance = () => {
   );
 
   const filteredAllLogs = allLogs.filter(log => {
-    // 1. Date filter
     const dateObj = new Date(log.date);
     const logDateStr = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
     
@@ -1081,12 +1054,10 @@ const Attendance = () => {
     
     if (!matchesDate) return false;
 
-    // 2. Site filter
     if (selectedSite !== 'all' && log.siteId !== selectedSite) {
       return false;
     }
 
-    // 3. Search filter
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
       const empName = `${log.employee?.firstName} ${log.employee?.lastName}`.toLowerCase();
@@ -1114,7 +1085,6 @@ const Attendance = () => {
     const totalHours = approvedHours + rejectedHours + pendingHours;
     const efficiency = totalHours > 0 ? (approvedHours / totalHours) * 100 : 0;
 
-    // Current User Specific Stats
     const todayLog = logs.length > 0 ? logs[0] : null;
     let todayHours = "00:00:00";
     if (todayLog && todayLog.clockIn) {
@@ -1140,141 +1110,7 @@ const Attendance = () => {
   })();
 
   if (!isManagement) {
-    return (
-      <div className="enterprise-page user-view">
-        <div className="premium-toast-container">
-          <AnimatePresence>
-            {toasts.map((t) => (
-              <Toast key={t.id} {...t} onClose={removeToast} />
-            ))}
-          </AnimatePresence>
-        </div>
-        
-        <div className="user-attendance-grid">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card scanner-card"
-          >
-            <div className="verification-placeholder">
-              <div className="placeholder-icon">
-                <Shield size={64} color="var(--primary)" style={{ opacity: 0.2 }} />
-              </div>
-
-              <h3>{user?.isBiometricEnrolled ? (isClockedIn ? t('status') + ': ' + t('active') : t('verificationRequired')) : t('enrollmentRequired')}</h3>
-              <p>
-                {!user?.isBiometricEnrolled 
-                  ? t('enrollmentSubtext')
-                  : isClockedIn 
-                    ? `${t('clockedInAt')} ${new Date(logs[0].clockIn).toLocaleTimeString()}.`
-                    : t('verificationInstruction')}
-              </p>
-              
-              <div className="action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                {!user?.isBiometricEnrolled ? (
-                  <button 
-                    className="btn btn-primary btn-lg btn-block"
-                    onClick={() => {
-                      if (isManagement) {
-                        handleDirectClockIn();
-                      } else {
-                        setIsEnrolling(true);
-                        setShowScanner(true);
-                      }
-                    }}
-                  >
-                    {t('beginEnrollment')}
-                  </button>
-                ) : !isClockedIn ? (
-                    <button 
-                      className="btn btn-primary btn-lg btn-block"
-                      onClick={() => {
-                        if (isManagement) {
-                          handleDirectClockIn();
-                        } else {
-                          setIsEnrolling(false);
-                          setIsClockingOut(false);
-                          setShowScanner(true);
-                        }
-                      }}
-                    >
-                      {t('startSecureVerification')}
-                    </button>
-                ) : (
-                  <>
-                    <button 
-                      className={`btn ${isOnBreak ? 'btn-primary' : 'btn-outline'} btn-lg btn-block`}
-                      onClick={handleToggleBreak}
-                    >
-                      {isOnBreak ? 'End Break' : 'Start Break'}
-                    </button>
-                    <button 
-                      className="btn btn-danger btn-lg btn-block"
-                      onClick={handleClockOut}
-                      style={{ backgroundColor: 'var(--error)', color: 'white', border: 'none' }}
-
-                    >
-                      {t('clockOut')}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="user-stats-container">
-            <div className="stats-row">
-              <div className="glass-card s-card">
-                <span className="label">{t('todayHours')}</span>
-                <h2 className="value">{statsData.todayHours}</h2>
-              </div>
-              <div className="glass-card s-card">
-                <span className="label">{t('weeklyProgress')}</span>
-                <h2 className="value">{statsData.weeklyHours.toFixed(1)}h / 40h</h2>
-              </div>
-            </div>
-
-            <div className="glass-card personal-timeline">
-              <div className="card-header">
-                <h3>{t('history')}</h3>
-                <button 
-                  className="btn-ghost btn-sm"
-                  onClick={() => setShowCorrectionModal(true)}
-                >
-                  {t('requestCorrection')}
-                </button>
-              </div>
-              <div className="mini-table">
-                {logs.length > 0 ? logs.map((log, i) => (
-                  <div key={i} className="mini-row">
-                    <span className="m-date">{new Date(log.date).toLocaleDateString()}</span>
-                    <span className="m-time">
-                      {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
-                      {log.clockOut ? new Date(log.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t('active')}
-                    </span>
-                    <span className={`m-status ${log.clockOut ? 'approved' : 'pending'}`}>
-                      {log.clockOut ? t('completed') : t('onSite')}
-                    </span>
-                    {log.biometricProof && (
-                      <button 
-                        className="btn-proof-mini" 
-                        onClick={() => setSelectedProof(log.biometricProof.startsWith('http') ? log.biometricProof : `${API_URL}${log.biometricProof}`)}
-                        title="View Identification Proof"
-                      >
-                        <Camera size={14} />
-                      </button>
-                    )}
-                  </div>
-                )) : (
-                  <div className="no-logs">{t('noLogs')}</div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        {renderModals()}
-      </div>
-    );
+    return <EmployeeAttendance />;
   }
 
   return (
@@ -1538,7 +1374,6 @@ const Attendance = () => {
                             </>
                           )}
                           <button className="status-btn delete" onClick={() => handleDeleteLog(log.id)} title="Purge Log" style={{ color: 'var(--error)' }}>
-
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -1561,7 +1396,6 @@ const Attendance = () => {
                 </div>
                 
                 <div className="timeline-body">
-                  {/* Group logs by employee for the selected day */}
                   {Array.from(new Set(filteredAllLogs.map(l => l.employeeId))).map(empId => {
                     const empLogs = filteredAllLogs.filter(l => l.employeeId === empId);
                     const emp = empLogs[0]?.employee;
@@ -1703,11 +1537,9 @@ const Attendance = () => {
                   const prevMonthDays = new Date(year, month, 0).getDate();
                   
                   const cells = [];
-                  // Prev month padding
                   for (let i = firstDay - 1; i >= 0; i--) {
                     cells.push(<div key={`prev-${i}`} className="day-cell muted">{prevMonthDays - i}</div>);
                   }
-                  // Current month
                   for (let i = 1; i <= daysInMonth; i++) {
                     const isSelected = new Date(selectedDate).getDate() === i && new Date(selectedDate).getMonth() === month;
                     cells.push(

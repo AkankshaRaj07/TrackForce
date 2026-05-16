@@ -14,10 +14,10 @@
   margin-bottom: 2.5rem;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(165deg, #0f172a 0%, #1e293b 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 32px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
 }
 
 .employee-hero-card-premium::after {
@@ -40,8 +40,8 @@
   gap: 8px;
   padding: 8px 16px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--highlight);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.8rem;
@@ -66,9 +66,9 @@
   height: 160px;
   border-radius: 28px;
   overflow: hidden;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-  background: #1e293b;
+  border: 4px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  background: var(--surface-hover);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,9 +110,7 @@
 .hero-info-cluster h1 {
   font-size: 3.5rem;
   margin: 0 0 0.5rem 0;
-  background: linear-gradient(to right, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
   font-weight: 800;
   letter-spacing: -1px;
 }
@@ -125,25 +123,24 @@
 }
 
 .id-tag-premium {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--highlight);
   color: var(--primary);
   padding: 6px 16px;
   border-radius: 100px;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
   font-size: 0.85rem;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--accent-glow);
 }
 
 .credential-node-premium {
-
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--highlight);
   padding: 8px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
 }
 
 .credential-node-premium label {
@@ -157,10 +154,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--highlight-mid);
   padding: 4px 8px 4px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
 }
 
 .pass-toggle-node input {
@@ -218,10 +215,10 @@
 }
 
 .glass-tile-premium {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
   border-radius: 30px;
   padding: 2.5rem;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -302,7 +299,7 @@
 .tile-footer-meta {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -320,15 +317,15 @@
 }
 
 .biometric-badge-premium.verified {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.2);
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: var(--accent-glow);
 }
 
 .biometric-badge-premium.pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.2);
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: var(--warning-bg);
 }
 
 /* Performance Deck */

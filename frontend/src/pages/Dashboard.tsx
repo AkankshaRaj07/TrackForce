@@ -67,11 +67,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setLoading(true);
-    fetchStats()
-      .then(setStats)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const loadData = () => {
+      fetchStats()
+        .then(setStats)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    };
+
+    loadData();
+    const interval = setInterval(loadData, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
   }, []);
 
   const isManagement = user?.role === 'ADMIN' || user?.role === 'MANAGER';
@@ -314,15 +319,15 @@ const Dashboard = () => {
             <tbody>
               {stats.recentLogs.map((log: any, idx: number) => (
                 <tr key={idx}>
-                  <td className="timestamp">{formatTime(log.time)}</td>
-                  <td className="entity">{log.title}</td>
-                  <td className="event-type">{log.type}</td>
-                  <td>
+                  <td className="timestamp" data-label="TIMESTAMP">{formatTime(log.time)}</td>
+                  <td className="entity" data-label="ENTITY">{log.title}</td>
+                  <td className="event-type" data-label="EVENT TYPE">{log.type}</td>
+                  <td data-label="STATUS">
                     <span className={`status-pill ${log.type === 'ALERT' ? 'warning' : 'success'}`}>
                       {log.type === 'ALERT' ? 'Pending' : 'Verified'}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="ACTION">
                     {user?.role === 'ADMIN' && (
                       <button className="table-action-btn" onClick={() => navigate(`/employees/${log.entityId || ''}`)}>View Details</button>
                     )}

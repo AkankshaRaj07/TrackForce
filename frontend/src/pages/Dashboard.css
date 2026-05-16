@@ -112,14 +112,11 @@
 }
 
 .watt-btn.secondary {
-  background: #E2E8F0;
-  color: #475569;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
 }
 
-[data-theme='dark'] .watt-btn.secondary {
-  background: #334155;
-  color: #F1F5F9;
-}
+/* Handled by global variables */
 
 .watt-btn.secondary:hover {
   background: #CBD5E1;
@@ -177,14 +174,14 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--text-tertiary);
-  background: #F1F5F9;
+  background: var(--surface-hover);
   padding: 4px 8px;
   border-radius: 6px;
   text-transform: uppercase;
 }
 
 [data-theme='dark'] .stat-trend-label {
-  background: #1E293B;
+  background: var(--surface-hover);
 }
 
 .stat-card-content {
@@ -302,13 +299,13 @@
 
 .asset-progress-bg {
   height: 8px;
-  background: #F1F5F9;
+  background: var(--border);
   border-radius: 4px;
   overflow: hidden;
 }
 
 [data-theme='dark'] .asset-progress-bg {
-  background: #1E293B;
+  background: var(--border);
 }
 
 .asset-progress-fill {
@@ -347,13 +344,13 @@
 }
 
 .n-icon-watt.alert {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .n-icon-watt.approved {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10B981;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .n-text-watt strong {
@@ -417,11 +414,11 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   border-bottom: 1px solid var(--border);
-  background: #F8FAFC;
+  background: var(--surface-hover);
 }
 
 [data-theme='dark'] .events-table th {
-  background: #1E293B;
+  background: var(--surface-hover);
 }
 
 .events-table td {
@@ -459,13 +456,13 @@
 }
 
 .status-pill.success {
-  background: #DCFCE7;
-  color: #166534;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .status-pill.warning {
-  background: #FEF3C7;
-  color: #92400E;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .table-action-btn {
@@ -554,5 +551,86 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
+  }
+
+  .header-actions {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .header-actions .watt-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    margin-bottom: 24px;
+  }
+
+  .identity-section-watt {
+    gap: 12px;
+  }
+
+  .welcome-group-watt h1 {
+    font-size: 22px;
+  }
+
+  .stats-grid-watt {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .watt-card {
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .chart-wrapper-watt {
+    height: 280px;
+  }
+
+  .card-header-watt {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .chart-legend-watt {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .events-table-wrapper {
+    margin: 0 -20px;
+    width: calc(100% + 40px);
+  }
+
+  .events-table th, .events-table td {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-group-watt h1 {
+    font-size: 20px;
+  }
+
+  .role-chip-watt {
+    font-size: 10px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .watt-btn {
+    padding: 8px 16px;
+    font-size: 13px;
   }
 }

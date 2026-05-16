@@ -33,8 +33,8 @@
 .stat-icon-wrap {
   width: 44px;
   height: 44px;
-  background: rgba(var(--primary-rgb), 0.1);
-  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  background: var(--primary-glow);
+  border: 1px solid var(--border);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -116,7 +116,7 @@
 
 .ot-badge {
   padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--highlight);
   border-radius: 4px;
   font-size: 12px;
   color: var(--text-dim);
@@ -155,40 +155,61 @@
 }
 
 @media (max-width: 768px) {
+  .payroll-container {
+    padding: 12px;
+  }
+
   .stats-grid-premium {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px;
+    margin-bottom: 24px;
   }
   
   .stat-card-premium {
     padding: 16px;
     gap: 10px;
+    border-radius: 16px;
   }
 
   .stat-icon-wrap {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
   }
 
   .stat-value {
-    font-size: 16px; /* Reduced from 24px */
+    font-size: 18px;
     letter-spacing: -0.02em;
-    word-break: break-all;
   }
 
   .stat-label {
-    font-size: 10px;
-  }
-
-  .stat-trend {
-    top: 16px;
-    right: 16px;
+    font-size: 9px;
   }
 
   .table-header-controls {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
+  }
+
+  .table-controls {
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .action-row-mini {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .icon-btn {
+    flex: 1;
+    justify-content: center;
   }
   
   .enterprise-table, 
@@ -206,20 +227,28 @@
 
   .enterprise-table tr {
     margin-bottom: 16px;
-    background: var(--surface-hover);
-    border-radius: 12px;
-    padding: 16px;
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 20px;
     border: 1px solid var(--border);
     position: relative;
-    text-align: left;
+    box-shadow: var(--shadow-sm);
   }
 
   .enterprise-table td {
-    padding: 8px 0;
+    padding: 12px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border: none !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .enterprise-table td:last-child {
+    border-bottom: none !important;
+    margin-top: 8px;
+    padding-top: 12px;
+    justify-content: flex-end;
   }
 
   .enterprise-table td::before {
@@ -227,7 +256,7 @@
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    color: var(--text-dim);
+    color: var(--text-tertiary);
     margin-right: 12px;
   }
 
@@ -235,21 +264,30 @@
     font-size: 16px;
     font-weight: 800;
     color: var(--primary);
-    border-bottom: 1px solid var(--border) !important;
+    border-bottom: 2px solid var(--border) !important;
     margin-bottom: 8px;
     padding-bottom: 12px;
     display: block;
+    width: 100%;
   }
 
   .enterprise-table td:first-child::before {
     display: none;
   }
+}
 
-  .enterprise-table td:last-child {
-    justify-content: flex-end;
-    margin-top: 8px;
-    border-top: 1px solid var(--border) !important;
-    padding-top: 12px;
+@media (max-width: 480px) {
+  .stats-grid-premium {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .badge {
+    min-width: 60px;
+    font-size: 9px;
   }
 }
 
@@ -355,16 +393,16 @@
 }
 
 .badge-pending {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.3);
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: var(--warning-bg);
 }
 
 .badge-paid {
-  background: #10b981;
+  background: var(--success);
   color: #ffffff;
   font-weight: 900;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Ensure table cells align correctly */

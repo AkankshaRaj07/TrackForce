@@ -273,20 +273,20 @@
 }
 
 .icon-btn-premium.edit {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--accent-glow);
 }
 
 .icon-btn-premium.edit:hover {
-  background: #10b981;
+  background: var(--success);
   color: #fff;
 }
 
 .icon-btn-premium.delete {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-bg);
 }
 
 .assigned-badge-on-border {
@@ -307,15 +307,15 @@
 }
 
 .icon-btn-premium.edit:hover {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border-color: #10b981;
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: var(--success);
 }
 
 .icon-btn-premium.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: #ef4444;
+  background: var(--error-bg);
+  color: var(--error);
+  border-color: var(--error);
 }
 
 .site-actions-premium {
@@ -378,7 +378,7 @@
 }
 
 .leaflet-container {
-  background: #111 !important;
+  background: var(--surface) !important;
 }
 
 .leaflet-control-attribution {
@@ -397,14 +397,63 @@
 }
 
 @media (max-width: 1200px) {
-  .sites-layout { grid-template-columns: 1fr; }
-  .map-preview-card { order: -1; min-height: 400px; }
+  .sites-page {
+    height: auto;
+    margin: 0;
+    overflow-y: auto;
+  }
+  .sites-layout { 
+    grid-template-columns: 1fr; 
+    padding: 0 16px;
+    height: auto;
+    overflow: visible;
+  }
+  .map-preview-section {
+    order: -1;
+    height: 400px;
+    padding: 16px 0;
+  }
+  .sites-list-section {
+    padding: 16px 0;
+    overflow: visible;
+    height: auto;
+  }
 }
 
 @media (max-width: 768px) {
-  .sites-page { gap: 16px; margin: 0; padding: 16px; height: auto; overflow: visible; }
-  .sites-layout { padding: 0; }
-  .sites-list-section { padding: 16px 0; overflow: visible; height: auto; }
-  .sites-grid { grid-template-columns: 1fr; gap: 16px; }
-  .site-card { min-height: auto; }
+  .sites-page { 
+    padding: 12px;
+  }
+  .map-preview-section {
+    height: 300px;
+  }
+  .search-filter-card {
+    margin-bottom: 16px;
+  }
+  .sites-grid { 
+    grid-template-columns: 1fr; 
+    gap: 16px; 
+  }
+  .site-card { 
+    min-height: auto; 
+  }
+  .intel-row-premium {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 24px;
+  }
+  .map-header {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .map-legend {
+    width: 100%;
+    justify-content: space-between;
+  }
 }

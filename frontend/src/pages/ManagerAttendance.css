@@ -35,7 +35,7 @@
   padding: 32px;
   align-items: center;
   gap: 32px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--highlight);
 }
 
 .profile-card-mini {
@@ -91,7 +91,7 @@
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--success-bg);
   border: 1px solid var(--success);
   border-radius: 30px;
   color: var(--success);
@@ -195,7 +195,7 @@
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
+  background: var(--highlight);
 }
 
 .search-box input {
@@ -352,7 +352,7 @@
   width: 100%;
   max-width: 400px;
   aspect-ratio: 4/3;
-  background: rgba(0,0,0,0.05);
+  background: var(--highlight);
   border-radius: 20px;
   border: 2px dashed var(--border);
   display: flex;

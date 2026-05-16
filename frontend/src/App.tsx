@@ -8,12 +8,12 @@ import AddEmployee from './pages/AddEmployee';
 import Attendance from './pages/Attendance';
 import AttendanceGrid from './pages/AttendanceGrid';
 import Tracking from './pages/Tracking';
-import Payroll from './pages/Payroll';
-import Sites from './pages/Sites';
-import Settings from './pages/Settings';
-import ManagerAttendance from './pages/ManagerAttendance';
-import EmployeeDetails from './pages/EmployeeDetails';
-import CompleteProfile from './pages/CompleteProfile';
+import Payroll from './pages/Payroll.tsx';
+import Sites from './pages/Sites.tsx';
+import Profile from './pages/Profile.tsx';
+import ManagerAttendance from './pages/ManagerAttendance.tsx';
+import EmployeeDetails from './pages/EmployeeDetails.tsx';
+import CompleteProfile from './pages/CompleteProfile.tsx';
 import Sidebar from './layout/Sidebar';
 import Topbar from './layout/Topbar';
 import './App.css';
@@ -87,10 +87,11 @@ function App() {
             <Route path="/attendance" element={<ProtectedRoute><PlatformLayout><Attendance /></PlatformLayout></ProtectedRoute>} />
             <Route path="/attendance/grid" element={<ProtectedRoute><PlatformLayout><AttendanceGrid /></PlatformLayout></ProtectedRoute>} />
             <Route path="/attendance/manager" element={<ProtectedRoute><PlatformLayout><ManagerAttendance /></PlatformLayout></ProtectedRoute>} />
-            <Route path="/tracking" element={<ProtectedRoute><PlatformLayout><Tracking /></PlatformLayout></ProtectedRoute>} />
-            <Route path="/payroll" element={<ProtectedRoute adminOnly><PlatformLayout><Payroll /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/tracking" element={<ProtectedRoute adminOnly><PlatformLayout><Tracking /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/payroll" element={<ProtectedRoute><PlatformLayout><Payroll /></PlatformLayout></ProtectedRoute>} />
             <Route path="/sites" element={<ProtectedRoute><PlatformLayout><Sites /></PlatformLayout></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><PlatformLayout><Settings /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><PlatformLayout><Profile /></PlatformLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<Navigate to="/profile" replace />} />
 
             {/* Redirect any other path to Landing */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -64,6 +64,8 @@ const Payroll = () => {
 
   useEffect(() => {
     loadPayrollData();
+    const interval = setInterval(loadPayrollData, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
   }, []);
 
   const loadPayrollData = async () => {
