@@ -69,6 +69,7 @@ const AddEmployee = () => {
     idDoc: null as File | null
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState<'credentials' | 'payroll' | 'documents'>('credentials');
 
   useEffect(() => {
     const initPage = async () => {
@@ -183,19 +184,17 @@ const AddEmployee = () => {
       animate={{ opacity: 1, y: 0 }}
       className="add-employee-page"
     >
-      <header className="page-header">
-        <div className="header-left">
-          <div>
-            <h1>{isEditMode ? "Edit Employee Profile" : "Add New Workforce Member"}</h1>
-            <p>{isEditMode ? "Modify existing workforce data and biometric access levels." : "Set up a new workforce member with biometric access."}</p>
-          </div>
-          <button className="btn-icon-ghost back-btn-compact" onClick={() => navigate('/employees')}>
-            <ChevronLeft size={20} />
-          </button>
+      <header className="provision-header-premium">
+        <button className="provision-back-btn" onClick={() => navigate('/employees')}>
+          <ChevronLeft size={20} />
+        </button>
+        <div className="provision-title-group">
+          <h1>{isEditMode ? "Edit Employee Profile" : "Add New Workforce Member"}</h1>
+          <p>{isEditMode ? "Modify existing workforce data and biometric access levels." : "Set up a new workforce member with biometric access."}</p>
         </div>
       </header>
 
-      <div className="glass-card form-container-premium">
+      <div className="provision-portal-form">
         <form onSubmit={handleSubmit} className="premium-form">
           {error && (
             <div className="error-banner">
@@ -204,356 +203,392 @@ const AddEmployee = () => {
             </div>
           )}
 
-          <div className="form-section">
-            <div className="section-header">
-              <User size={20} />
-              <h3>Basic Information</h3>
-            </div>
-            
-            <div className="profile-top-site" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Full Name <span className="required-star">*</span></label>
-                <input 
-                  type="text" 
-                  required 
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value.replace(/[0-9]/g, '')})}
-                  placeholder="e.g. John Doe" 
-                />
-              </div>
-
-              <div className="avatar-upload-compact">
-                <div className="avatar-preview-md">
-                  {formData.avatar ? (
-                    <img src={formData.avatar} alt="Preview" />
-                  ) : (
-                    <User size={32} />
-                  )}
-                  <label htmlFor="avatar-page-upload" className="upload-badge-md">
-                    <Camera size={16} />
-                  </label>
-                </div>
-                <input 
-                  id="avatar-page-upload"
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, 'avatar')}
-                  style={{ display: 'none' }}
-                />
-                <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '4px', textAlign: 'center', opacity: 0.8 }}>Avatar <span className="required-star">*</span></p>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <Lock size={20} />
-              <h3>Security & Authentication</h3>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Employee ID (Login ID) <span className="required-star">*</span></label>
-                <input 
-                  type="text" 
-                  required 
-                  value={formData.employeeId}
-                  onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                  placeholder="e.g. TF001" 
-                />
-              </div>
-              <div className="form-group">
-                <label>{isEditMode ? "New Password" : "Initial Password"} <span className="required-star">*</span></label>
-                <div className="password-input-wrapper" style={{ position: 'relative', maxWidth: '220px' }}>
+          <div className="provision-portal-grid">
+            {/* LEFT: Static Biometric Info Sidebar */}
+            <div className="portal-sidebar-premium">
+              <div className="avatar-section-premium">
+                <div className="avatar-upload-premium">
+                  <div className="avatar-preview-lg">
+                    {formData.avatar ? (
+                      <img src={formData.avatar} alt="Preview" />
+                    ) : (
+                      <User size={48} className="placeholder-avatar-icon" />
+                    )}
+                    <label htmlFor="avatar-page-upload" className="upload-badge-lg">
+                      <Camera size={18} />
+                    </label>
+                  </div>
                   <input 
-                    type={showPassword ? "text" : "password"} 
-                    required={!isEditMode}
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    placeholder="••••••••" 
+                    id="avatar-page-upload"
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'avatar')}
+                    style={{ display: 'none' }}
                   />
-                  <button
-                    type="button"
-                    className="password-toggle-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--primary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      opacity: 0.9,
-                      transition: 'opacity 0.3s ease'
-                    }}
+                </div>
+                <div className="sidebar-badge-premium">
+                  <div className="badge-pulse"></div>
+                  <span>BIOMETRIC IDENTITY NODE</span>
+                </div>
+              </div>
+
+              <div className="sidebar-inputs-premium">
+                <div className="form-group">
+                  <label>Full Name <span className="required-star">*</span></label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({...formData, fullName: e.target.value.replace(/[0-9]/g, '')})}
+                    placeholder="e.g. John Doe" 
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Designation <span className="required-star">*</span></label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={formData.designation}
+                    onChange={(e) => setFormData({...formData, designation: e.target.value})}
+                    placeholder="e.g. Site Supervisor" 
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Access Level <span className="required-star">*</span></label>
+                  <PremiumSelect 
+                    required
+                    disabled={!isAdmin}
+                    value={formData.role}
+                    onChange={(val: string) => setFormData({...formData, role: val})}
+                    options={[
+                      { label: 'Standard Employee', value: 'EMPLOYEE' },
+                      { label: 'Manager', value: 'MANAGER' },
+                      { label: 'Administrator', value: 'ADMIN' }
+                    ]}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Project Site <span className="required-star">*</span></label>
+                  <PremiumSelect 
+                    required
+                    value={formData.siteId}
+                    onChange={(val: string) => setFormData({...formData, siteId: val})}
+                    options={[
+                      { label: 'Select Project Site...', value: '' },
+                      ...sites.map(site => ({ label: site.name, value: site.id }))
+                    ]}
+                    placeholder="Select Project Site..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: Detailed Configuration Tabs */}
+            <div className="portal-main-premium">
+              <nav className="portal-tab-nav">
+                <button 
+                  type="button" 
+                  className={`portal-tab-btn ${activeTab === 'credentials' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('credentials')}
+                >
+                  <Lock size={16} />
+                  <span>Credentials & Contact</span>
+                </button>
+                <button 
+                  type="button" 
+                  className={`portal-tab-btn ${activeTab === 'payroll' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('payroll')}
+                >
+                  <CreditCard size={16} />
+                  <span>Payroll & Banking</span>
+                </button>
+                <button 
+                  type="button" 
+                  className={`portal-tab-btn ${activeTab === 'documents' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('documents')}
+                >
+                  <FileText size={16} />
+                  <span>Documents & ID</span>
+                </button>
+              </nav>
+
+              <div className="portal-tab-content">
+                {activeTab === 'credentials' && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="tab-panel"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                    <div className="panel-subheader">
+                      <Lock size={16} />
+                      <h4>Portal Credentials & Security</h4>
+                    </div>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>Employee ID (Login ID) <span className="required-star">*</span></label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={formData.employeeId}
+                          onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
+                          placeholder="e.g. TF001" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>{isEditMode ? "New Password" : "Initial Password"} <span className="required-star">*</span></label>
+                        <div className="password-input-wrapper" style={{ position: 'relative' }}>
+                          <input 
+                            type={showPassword ? "text" : "password"} 
+                            required={!isEditMode}
+                            value={formData.password}
+                            onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            placeholder="••••••••" 
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                              position: 'absolute',
+                              right: '12px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--primary)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              opacity: 0.9,
+                              transition: 'opacity 0.3s ease'
+                            }}
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="panel-subheader" style={{ marginTop: '24px' }}>
+                      <Smartphone size={16} />
+                      <h4>Personal Contact Information</h4>
+                    </div>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>Phone Number <span className="required-star">*</span></label>
+                        <input 
+                          type="tel" 
+                          required 
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          placeholder="+1 (555) 000-0000" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Date of Birth</label>
+                        <input 
+                          type="date" 
+                          value={formData.dob}
+                          onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'payroll' && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="tab-panel"
+                  >
+                    <div className="panel-subheader">
+                      <TrendingUp size={16} />
+                      <h4>Hourly Pay & Overtime Protocols</h4>
+                    </div>
+                    <div className="form-grid-3">
+                      <div className="form-group">
+                        <label>Salary (Per Hour) <span className="required-star">*</span></label>
+                        <div className="input-with-label">
+                          <span className="currency-prefix">₫</span>
+                          <input 
+                            type="number" 
+                            step="1000"
+                            min="0"
+                            required
+                            value={formData.hourlyRate || ''}
+                            onChange={(e) => setFormData({...formData, hourlyRate: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
+                            placeholder="50,000" 
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>Overtime Protocol <span className="required-star">*</span></label>
+                        <PremiumSelect 
+                          required
+                          value={formData.overtimeType}
+                          onChange={(val: string) => setFormData({...formData, overtimeType: val})}
+                          options={[
+                            { label: 'Multiplier (1.5x, 2x...)', value: 'MULTIPLIER' },
+                            { label: 'Fixed Amount (VNĐ)', value: 'FIXED' }
+                          ]}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>{formData.overtimeType === 'MULTIPLIER' ? 'Multiplier Value' : 'Fixed Amount (₫)'} <span className="required-star">*</span></label>
+                        <div className="input-with-label">
+                          <span className="currency-prefix">{formData.overtimeType === 'MULTIPLIER' ? <TrendingUp size={18} /> : '₫'}</span>
+                          <input 
+                            type="number" 
+                            step="0.01"
+                            min="0"
+                            required
+                            value={formData.overtimeValue || ''}
+                            onChange={(e) => setFormData({...formData, overtimeValue: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
+                            placeholder={formData.overtimeType === 'MULTIPLIER' ? '1.5' : '100,000'} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="panel-subheader" style={{ marginTop: '24px' }}>
+                      <CreditCard size={16} />
+                      <h4>Direct Deposit Banking Details</h4>
+                    </div>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>Bank Name</label>
+                        <input 
+                          type="text" 
+                          value={formData.bankName}
+                          onChange={(e) => setFormData({...formData, bankName: e.target.value})}
+                          placeholder="e.g. Vietcombank" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Account Number</label>
+                        <input 
+                          type="text" 
+                          value={formData.accountNumber}
+                          onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
+                          placeholder="0123456789" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Account Holder Name</label>
+                        <input 
+                          type="text" 
+                          value={formData.accountHolderName}
+                          onChange={(e) => setFormData({...formData, accountHolderName: e.target.value})}
+                          placeholder="FULL NAME AS PER BANK" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Swift / Routing Code</label>
+                        <input 
+                          type="text" 
+                          value={formData.swiftCode}
+                          onChange={(e) => setFormData({...formData, swiftCode: e.target.value})}
+                          placeholder="VCBKVNVX" 
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'documents' && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="tab-panel"
+                  >
+                    <div className="panel-subheader">
+                      <FileText size={16} />
+                      <h4>Passport & Identity Credentials</h4>
+                    </div>
+                    <div className="form-grid-3">
+                      <div className="form-group">
+                        <label>Passport Number</label>
+                        <input 
+                          type="text" 
+                          value={formData.passportNumber}
+                          onChange={(e) => setFormData({...formData, passportNumber: e.target.value})}
+                          placeholder="e.g. A12345678" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Issue Date</label>
+                        <input 
+                          type="date" 
+                          value={formData.passportIssue}
+                          onChange={(e) => setFormData({...formData, passportIssue: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Expiry Date</label>
+                        <input 
+                          type="date" 
+                          value={formData.passportExpiry}
+                          onChange={(e) => setFormData({...formData, passportExpiry: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="panel-subheader" style={{ marginTop: '24px' }}>
+                      <Upload size={16} />
+                      <h4>Verification & Files Repository</h4>
+                    </div>
+                    <div className="file-upload-grid-compact" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                      <div className="file-upload-node">
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Resume / Professional CV</label>
+                        <div className="upload-box-premium">
+                          <Upload size={16} color="var(--primary)" />
+                          <span>
+                            {files.cv ? files.cv.name : (formData.cvPath ? 'CV Uploaded' : 'Upload CV')}
+                          </span>
+                          <input type="file" onChange={(e) => handleFileChange(e, 'cv')} />
+                        </div>
+                      </div>
+                      <div className="file-upload-node">
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>ID Proof / Passport Copy</label>
+                        <div className="upload-box-premium">
+                          <Upload size={16} color="var(--primary)" />
+                          <span>
+                            {files.idDoc ? files.idDoc.name : (formData.idDocPath ? 'ID Uploaded' : 'Upload ID')}
+                          </span>
+                          <input type="file" onChange={(e) => handleFileChange(e, 'idDoc')} />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {!isEditMode && (
+                <div className="enrollment-notice" style={{ marginTop: '24px' }}>
+                  <CheckCircle2 size={24} />
+                  <div>
+                    <h4>Face ID Enrollment Ready</h4>
+                    <p>The member will be required to scan their face during their first login to complete biometric enrollment.</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              )}
 
-          <div className="form-section">
-            <div className="section-header">
-              <Smartphone size={20} />
-              <h3>Contact Details</h3>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Date of Birth</label>
-                <input 
-                  type="date" 
-                  value={formData.dob}
-                  onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Phone Number <span className="required-star">*</span></label>
-                <input 
-                  type="tel" 
-                  required 
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  placeholder="+1 (555) 000-0000" 
-                />
+              <div className="form-actions-premium" style={{ marginTop: '32px' }}>
+                <button type="button" onClick={() => navigate('/employees')} className="btn btn-ghost">
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
+                  {isSubmitting ? "Processing..." : (isEditMode ? "Save Changes" : "Create Profile")}
+                  {isEditMode ? <Save size={18} style={{ marginLeft: '8px' }} /> : <UserPlus size={18} style={{ marginLeft: '8px' }} />}
+                </button>
               </div>
             </div>
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <CheckCircle2 size={20} />
-              <h3>Payroll Parameters</h3>
-            </div>
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label>Salary (Per Hour) <span className="required-star">*</span></label>
-                <div className="input-with-label">
-                  <span className="currency-prefix">₫</span>
-                  <input 
-                    type="number" 
-                    step="1000"
-                    min="0"
-                    required
-                    value={formData.hourlyRate || ''}
-                    onChange={(e) => setFormData({...formData, hourlyRate: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
-                    placeholder="50,000" 
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Overtime Protocol <span className="required-star">*</span></label>
-                <PremiumSelect 
-                  required
-                  value={formData.overtimeType}
-                  onChange={(val: string) => setFormData({...formData, overtimeType: val})}
-                  options={[
-                    { label: 'Multiplier (1x, 1.5x...)', value: 'MULTIPLIER' },
-                    { label: 'Fixed Amount (VNĐ)', value: 'FIXED' }
-                  ]}
-                />
-              </div>
-              <div className="form-group">
-                <label>{formData.overtimeType === 'MULTIPLIER' ? 'Multiplier Value' : 'Fixed Amount (₫)'} <span className="required-star">*</span></label>
-                <div className="input-with-label">
-                  <span className="currency-prefix">{formData.overtimeType === 'MULTIPLIER' ? <TrendingUp size={18} /> : '₫'}</span>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    required
-                    value={formData.overtimeValue || ''}
-                    onChange={(e) => setFormData({...formData, overtimeValue: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
-                    placeholder={formData.overtimeType === 'MULTIPLIER' ? '1.5' : '100,000'} 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <Briefcase size={20} />
-              <h3>Project & Role</h3>
-            </div>
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label>Designation <span className="required-star">*</span></label>
-                <input 
-                  type="text" 
-                  required 
-                  value={formData.designation}
-                  onChange={(e) => setFormData({...formData, designation: e.target.value})}
-                  placeholder="Software Engineer" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Access Level <span className="required-star">*</span></label>
-                <PremiumSelect 
-                  required
-                  disabled={!isAdmin}
-                  value={formData.role}
-                  onChange={(val: string) => setFormData({...formData, role: val})}
-                  options={[
-                    { label: 'Standard Employee', value: 'EMPLOYEE' },
-                    { label: 'Manager', value: 'MANAGER' },
-                    { label: 'Administrator', value: 'ADMIN' }
-                  ]}
-                />
-              </div>
-              <div className="form-group">
-                <label>Project Site <span className="required-star">*</span></label>
-                <PremiumSelect 
-                  required
-                  value={formData.siteId}
-                  onChange={(val: string) => setFormData({...formData, siteId: val})}
-                  options={[
-                    { label: 'Select Project Site...', value: '' },
-                    ...sites.map(site => ({ label: site.name, value: site.id }))
-                  ]}
-                  placeholder="Select Project Site..."
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <CreditCard size={20} />
-              <h3>Bank Account Details</h3>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Bank Name</label>
-                <input 
-                  type="text" 
-                  value={formData.bankName}
-                  onChange={(e) => setFormData({...formData, bankName: e.target.value})}
-                  placeholder="e.g. Vietcombank" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Account Number</label>
-                <input 
-                  type="text" 
-                  value={formData.accountNumber}
-                  onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
-                  placeholder="0123456789" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Account Holder Name</label>
-                <input 
-                  type="text" 
-                  value={formData.accountHolderName}
-                  onChange={(e) => setFormData({...formData, accountHolderName: e.target.value})}
-                  placeholder="FULL NAME AS PER BANK" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Swift / Routing Code</label>
-                <input 
-                  type="text" 
-                  value={formData.swiftCode}
-                  onChange={(e) => setFormData({...formData, swiftCode: e.target.value})}
-                  placeholder="VCBKVNVX" 
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <FileText size={20} />
-              <h3>Passport and ID Details</h3>
-            </div>
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label>Passport Number</label>
-                <input 
-                  type="text" 
-                  value={formData.passportNumber}
-                  onChange={(e) => setFormData({...formData, passportNumber: e.target.value})}
-                  placeholder="e.g. A12345678" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Issue Date</label>
-                <input 
-                  type="date" 
-                  value={formData.passportIssue}
-                  onChange={(e) => setFormData({...formData, passportIssue: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Expiry Date</label>
-                <input 
-                  type="date" 
-                  value={formData.passportExpiry}
-                  onChange={(e) => setFormData({...formData, passportExpiry: e.target.value})}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <div className="section-header">
-              <FileText size={20} />
-              <h3>Employee Documents</h3>
-
-
-            </div>
-            <div className="file-upload-grid-compact" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              <div className="file-upload-node">
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Resume / Professional CV</label>
-
-                <div className="upload-box-premium">
-                  <Upload size={16} color="var(--primary)" />
-                  <span>
-                    {files.cv ? files.cv.name : (formData.cvPath ? 'CV Uploaded' : 'Upload CV')}
-                  </span>
-                  <input type="file" onChange={(e) => handleFileChange(e, 'cv')} />
-                </div>
-              </div>
-              <div className="file-upload-node">
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>ID Proof / Passport Copy</label>
-
-                <div className="upload-box-premium">
-                  <Upload size={16} color="var(--primary)" />
-                  <span>
-                    {files.idDoc ? files.idDoc.name : (formData.idDocPath ? 'ID Uploaded' : 'Upload ID')}
-                  </span>
-                  <input type="file" onChange={(e) => handleFileChange(e, 'idDoc')} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {!isEditMode && (
-            <div className="enrollment-notice">
-              <CheckCircle2 size={24} />
-              <div>
-                <h4>Face ID Enrollment Ready</h4>
-                <p>The member will be required to scan their face during their first login to complete biometric enrollment.</p>
-              </div>
-            </div>
-          )}
-
-          <div className="form-actions-premium">
-            <button type="button" onClick={() => navigate('/employees')} className="btn btn-ghost">
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
-              {isSubmitting ? "Processing..." : (isEditMode ? "Save Changes" : "Create Profile")}
-              {isEditMode ? <Save size={18} style={{ marginLeft: '8px' }} /> : <UserPlus size={18} style={{ marginLeft: '8px' }} />}
-            </button>
           </div>
         </form>
       </div>

@@ -176,19 +176,19 @@ const Dashboard = () => {
         />
         <StatCard
           icon={<TrendingUp size={20} />}
-          label="Operational Efficiency"
-          value="94.2"
+          label={isManagement ? "Operational Efficiency" : "Monthly Hours"}
+          value={isManagement ? "94.2" : (stats?.monthlyHours ?? "0.0")}
           color="#F59E0B"
-          description="%"
-          trendLabel="Stable"
+          description={isManagement ? "%" : "hours"}
+          trendLabel={isManagement ? "Stable" : "This Month"}
         />
         <StatCard
           icon={<Wallet size={20} />}
           label={isManagement ? "Est. Payroll" : "Total Earnings"}
           value={isManagement ? "42.5" : (stats?.earnings ?? 0).toLocaleString()}
           color="#8B5CF6"
-          description={isManagement ? "k" : "₫"}
-          trendLabel="Proj. $840"
+          description={isManagement ? "k" : (stats?.currencySymbol || "$")}
+          trendLabel={isManagement ? "Proj. $840" : `Rate: $${stats?.hourlyRate || '25'}/hr`}
         />
       </section>
 
@@ -268,6 +268,16 @@ const Dashboard = () => {
                       transition={{ duration: 1, ease: "easeOut" }}
                     />
                   </div>
+                  {site.activeEmployees && site.activeEmployees.length > 0 && (
+                    <div className="active-employees-list">
+                      {site.activeEmployees.map((emp: string, empIdx: number) => (
+                        <span key={empIdx} className="active-employee-badge">
+                          <span className="status-dot"></span>
+                          {emp}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div className="empty-asset-state">No active site sessions detected.</div>

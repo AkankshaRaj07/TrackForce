@@ -14,7 +14,7 @@ import {
   Printer,
   Activity
 } from 'lucide-react';
-import { fetchPayroll, processPayroll, fetchPayrollStats } from '../api/api';
+import { fetchPayroll, processPayroll, fetchPayrollStats, generatePayslip } from '../api/api';
 import { exportToCSV } from '../utils/export';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
@@ -49,9 +49,14 @@ const Payroll = () => {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [toasts, setToasts] = useState<any[]>([]);
   const [isPayslipOpen, setIsPayslipOpen] = useState(false);
   const [selectedPayslip, setSelectedPayslip] = useState<any>(null);
+  const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
 
   const addToast = (message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -96,6 +101,27 @@ const Payroll = () => {
     }
   };
 
+  const handleGeneratePayslip = async (employeeId: string) => {
+    setGeneratingIds(prev => {
+      const next = new Set(prev);
+      next.add(employeeId);
+      return next;
+    });
+    try {
+      await generatePayslip(employeeId);
+      addToast('Payslip generated successfully!', 'success');
+      loadPayrollData();
+    } catch (err) {
+      addToast('Failed to generate payslip', 'error');
+    } finally {
+      setGeneratingIds(prev => {
+        const next = new Set(prev);
+        next.delete(employeeId);
+        return next;
+      });
+    }
+  };
+
   const handleExport = () => {
     exportToCSV(payrollData, 'Payroll_Registry');
     addToast('Report generated successfully', 'success');
@@ -103,9 +129,18 @@ const Payroll = () => {
 
   if (loading) return <div className="loading-state">Synchronizing Financial Nodes...</div>;
 
-  const filteredData = payrollData.filter(item => 
-    `${item.employee?.firstName} ${item.employee?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = payrollData.filter(item => {
+    const matchesSearch = `${item.employee?.firstName} ${item.employee?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesMonth = true;
+    if (selectedMonth && item.periodStart) {
+      const itemDate = new Date(item.periodStart);
+      const itemMonthStr = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`;
+      matchesMonth = itemMonthStr === selectedMonth;
+    }
+    
+    return matchesSearch && matchesMonth;
+  });
 
   return (
     <div className="payroll-page">
@@ -176,14 +211,14 @@ const Payroll = () => {
         )}
         <StatCard 
           icon={<Activity size={24} />} 
-          label="Ledger Status" 
-          value="Synchronized"
+          label={isEmployee ? "Payment Status" : "Ledger Status"} 
+          value={isEmployee ? "Up to date" : "Synchronized"}
           color="#10b981"
         />
       </div>
 
-      {!isEmployee && (
-        <div className="glass-card table-controls">
+      <div className="table-controls" style={{ justifyContent: isEmployee ? 'flex-end' : 'space-between' }}>
+        {!isEmployee && (
           <div className="search-bar">
             <Search size={18} />
             <input 
@@ -193,8 +228,17 @@ const Payroll = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+        )}
+        <div className="month-filter-wrap">
+          <input 
+            type="month" 
+            className="month-picker-input"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            title="Filter by Month"
+          />
         </div>
-      )}
+      </div>
 
       <div className="glass-card table-container">
         <table className="enterprise-table">
@@ -238,17 +282,54 @@ const Payroll = () => {
                 </td>
                 <td data-label="Action">
                   <div className="action-row-mini">
-                    <button 
-                      className="icon-btn highlight" 
-                      title="View Payslip"
-                      onClick={() => {
-                        setSelectedPayslip(item);
-                        setIsPayslipOpen(true);
-                      }}
-                    >
-                      {isEmployee ? <FileText size={16} /> : <Printer size={16} />}
-                      {isEmployee && <span style={{ marginLeft: '6px', fontSize: '12px' }}>View Payslip</span>}
-                    </button>
+                    {isEmployee ? (
+                      item.status === 'PAID' ? (
+                        <button 
+                          className="btn btn-primary" 
+                          title="View Payslip"
+                          style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          onClick={() => {
+                            setSelectedPayslip(item);
+                            setIsPayslipOpen(true);
+                          }}
+                        >
+                          <FileText size={16} />
+                          <span>View Payslip</span>
+                        </button>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-dim)', fontSize: '11px', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)', cursor: 'not-allowed' }} title="Payslip has not been generated by admin yet.">
+                          <Clock size={12} style={{ color: 'var(--warning)' }} />
+                          <span>Pending Release</span>
+                        </div>
+                      )
+                    ) : (
+                      item.status === 'PAID' ? (
+                        <button 
+                          className="btn-view-slip" 
+                          title="View Payslip"
+                          onClick={() => {
+                            setSelectedPayslip(item);
+                            setIsPayslipOpen(true);
+                          }}
+                        >
+                          <Printer size={12} />
+                          <span>View Slip</span>
+                        </button>
+                      ) : (
+                        <button 
+                          className="btn-generate" 
+                          disabled={generatingIds.has(item.id)}
+                          onClick={() => handleGeneratePayslip(item.id)}
+                        >
+                          {generatingIds.has(item.id) ? (
+                            <RefreshCw className="spin" size={12} />
+                          ) : (
+                            <FileText size={12} />
+                          )}
+                          <span>Generate</span>
+                        </button>
+                      )
+                    )}
                   </div>
                 </td>
               </tr>

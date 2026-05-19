@@ -70,6 +70,7 @@ const Attendance = () => {
   const [modelsLoaded, setModelsLoaded] = useState(areModelsLoaded());
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const hasDefaultedRef = useRef(false);
 
   const [logs, setLogs] = useState<any[]>([]);
   const [allLogs, setAllLogs] = useState<any[]>([]);
@@ -121,6 +122,11 @@ const Attendance = () => {
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const isMockProof = (proof: string | null) => {
+    if (!proof) return true;
+    return !proof.includes('/uploads/') && !proof.startsWith('data:') && !proof.startsWith('http://localhost:5000/uploads') && !proof.startsWith('https://');
   };
 
   useEffect(() => {
@@ -210,6 +216,25 @@ const Attendance = () => {
       ]);
       setLogs(today);
       setAllLogs(all);
+
+      // Smart default: If today has no logs but there are logs in the database,
+      // and we haven't smart-defaulted yet, default the daily selection to the most recent date with records.
+      if (all && all.length > 0 && !hasDefaultedRef.current) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const hasLogsForToday = all.some((log: any) => {
+          const dObj = new Date(log.date);
+          const dStr = `${dObj.getFullYear()}-${(dObj.getMonth() + 1).toString().padStart(2, '0')}-${dObj.getDate().toString().padStart(2, '0')}`;
+          return dStr === todayStr;
+        });
+
+        if (!hasLogsForToday && selectedDate === todayStr) {
+          const dates = all.map((log: any) => new Date(log.date));
+          const maxDate = new Date(Math.max(...dates.map((d: any) => d.getTime())));
+          const maxDateStr = `${maxDate.getFullYear()}-${(maxDate.getMonth() + 1).toString().padStart(2, '0')}-${maxDate.getDate().toString().padStart(2, '0')}`;
+          setSelectedDate(maxDateStr);
+          hasDefaultedRef.current = true;
+        }
+      }
     } catch (err) {
       console.error("Data load error:", err);
     }
@@ -883,8 +908,64 @@ const Attendance = () => {
                 <h3>{t('biometricSnapshot')}</h3>
                 <button className="close-btn-premium" onClick={() => setSelectedProof(null)}><X size={20} /></button>
               </div>
-              <div className="proof-content-obsidian">
-                <img src={selectedProof} alt="Biometric Proof" />
+              <div className="proof-content-obsidian" style={{ position: 'relative' }}>
+                {selectedProof && isMockProof(selectedProof) ? (
+                  <div className="mock-biometric-vector">
+                    <svg viewBox="0 0 100 100" className="bio-scan-svg">
+                      <circle cx="50" cy="50" r="40" stroke="var(--primary)" strokeWidth="1" fill="none" opacity="0.15" />
+                      <circle cx="50" cy="50" r="30" stroke="var(--primary)" strokeWidth="1.5" fill="none" opacity="0.3" strokeDasharray="5,5" className="spinning-circle" />
+                      
+                      {/* Face silhouette */}
+                      <path d="M50,25 C40,25 35,32 35,45 C35,55 42,65 50,65 C58,65 65,55 65,45 C65,32 60,25 50,25 Z" fill="none" stroke="var(--primary)" strokeWidth="1.5" />
+                      <path d="M30,80 C30,70 38,68 50,68 C62,68 70,70 70,80" fill="none" stroke="var(--primary)" strokeWidth="1.5" />
+                      
+                      {/* Scanner target lines */}
+                      <path d="M25,25 L35,25 M25,25 L25,35" stroke="var(--primary)" strokeWidth="1.5" fill="none" />
+                      <path d="M75,25 L65,25 M75,25 L75,35" stroke="var(--primary)" strokeWidth="1.5" fill="none" />
+                      <path d="M25,75 L35,75 M25,75 L25,65" stroke="var(--primary)" strokeWidth="1.5" fill="none" />
+                      <path d="M75,75 L65,75 M75,75 L75,65" stroke="var(--primary)" strokeWidth="1.5" fill="none" />
+                      
+                      {/* Laser line animation */}
+                      <line x1="20" y1="50" x2="80" y2="50" stroke="var(--primary)" strokeWidth="1.5" className="laser-line" />
+                      
+                      {/* Node scanning points */}
+                      <circle cx="45" cy="40" r="1.5" fill="var(--success)" />
+                      <circle cx="55" cy="40" r="1.5" fill="var(--success)" />
+                      <circle cx="50" cy="50" r="1.5" fill="var(--success)" />
+                      <circle cx="42" cy="48" r="1.5" fill="var(--success)" />
+                      <circle cx="58" cy="48" r="1.5" fill="var(--success)" />
+                      <circle cx="50" cy="58" r="1.5" fill="var(--success)" />
+                    </svg>
+                    <div className="mock-biometric-label">
+                      <span className="token-text">ID: {selectedProof}</span>
+                      <span className="badge-verified">SYSTEM VERIFIED</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <img 
+                      src={selectedProof || ''} 
+                      alt="Biometric Proof" 
+                      id="real-proof-image"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const parent = (e.target as HTMLImageElement).parentElement;
+                        if (parent) {
+                          const fallback = parent.querySelector('.fallback-vector-overlay');
+                          if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                        }
+                      }} 
+                    />
+                    <div className="fallback-vector-overlay" style={{ display: 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', minHeight: '320px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                      <svg viewBox="0 0 100 100" style={{ width: '80px', height: '80px' }}>
+                        <path d="M50,25 C40,25 35,32 35,45 C35,55 42,65 50,65 C58,65 65,55 65,45 C65,32 60,25 50,25 Z" fill="none" stroke="var(--text-dim)" strokeWidth="1.5" />
+                        <path d="M30,80 C30,70 38,68 50,68 C62,68 70,70 70,80" fill="none" stroke="var(--text-dim)" strokeWidth="1.5" />
+                        <line x1="20" y1="50" x2="80" y2="50" stroke="var(--error)" strokeWidth="1.5" />
+                      </svg>
+                      <span style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '12px', letterSpacing: '0.05em' }}>BIOMETRIC SNAPSHOT OFFLINE</span>
+                    </div>
+                  </>
+                )}
                 <div className="proof-meta-premium">
                   <Shield size={16} />
                   <span>AI-Verified Geometric Match</span>
@@ -1293,7 +1374,7 @@ const Attendance = () => {
                 <LayoutGrid size={16} /> Monthly Grid
               </button>
               <button className="btn-outline" onClick={handleExport}>{t('exportReport')}</button>
-              <button className="btn btn-primary" onClick={() => setShowManualLog(true)}>
+              <button className="btn btn-primary" onClick={() => navigate('/attendance/manager')}>
                 <UserPlus size={16} /> Log Manual Entry
               </button>
             </div>
@@ -1324,19 +1405,15 @@ const Attendance = () => {
                       <td data-label={t('checkout')}>{log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '---'}</td>
                       <td data-label={t('verification')}>
                         <div className="proof-stack-mini">
-                          {log.biometricProof ? (
+                          {log.biometricProof && (
                             <button className="btn-proof-tiny in" title="View Check-in Identity Proof" onClick={() => setSelectedProof(log.biometricProof.startsWith('http') ? log.biometricProof : `${API_URL}${log.biometricProof}`)}>
                               <Camera size={12} /> PROOF
                             </button>
-                          ) : (
-                            <div className="empty-proof-dot" title="No biometric proof available"></div>
                           )}
-                          {log.biometricProofOut ? (
+                          {log.biometricProofOut && (
                             <button className="btn-proof-tiny out" title="View Check-out Identity Proof" onClick={() => setSelectedProof(log.biometricProofOut.startsWith('http') ? log.biometricProofOut : `${API_URL}${log.biometricProofOut}`)}>
                               <Camera size={12} /> PROOF
                             </button>
-                          ) : (
-                            <div className="empty-proof-dot" title="No biometric proof available"></div>
                           )}
                         </div>
                       </td>

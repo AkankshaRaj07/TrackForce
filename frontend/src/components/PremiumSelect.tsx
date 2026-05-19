@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, CheckCircle2 } from 'lucide-react';
+import './PremiumSelect.css';
 
 interface Option {
   label: string;

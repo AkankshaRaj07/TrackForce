@@ -633,4 +633,68 @@
     padding: 8px 16px;
     font-size: 13px;
   }
+
+  .active-employees-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Active Employees Section in Site Performance */
+.active-employees-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(59, 130, 246, 0.04);
+  border-radius: 8px;
+  border: 1px dashed rgba(59, 130, 246, 0.15);
+}
+
+[data-theme='dark'] .active-employees-list {
+  background: rgba(59, 130, 246, 0.02);
+  border: 1px dashed rgba(59, 130, 246, 0.1);
+}
+
+.active-employee-badge {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.active-employee-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.active-employee-badge .status-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10B981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10B981;
+  animation: pulse-active 2s infinite;
+}
+
+@keyframes pulse-active {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }

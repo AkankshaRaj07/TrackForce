@@ -685,4 +685,28 @@
   .hero-container { grid-template-columns: 1fr; }
   .node-val { font-size: 40px; }
   .hero-actions { flex-direction: column; }
+  
+  .landing-nav {
+    padding: 12px 16px;
+  }
+  .nav-links {
+    gap: 12px;
+  }
+  .lang-text {
+    display: none;
+  }
+  .btn-get-started {
+    min-width: auto;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text {
+    font-size: 18px;
+  }
+  .nav-link-item {
+    display: none;
+  }
 }

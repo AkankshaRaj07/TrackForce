@@ -28,6 +28,23 @@ const handleResponse = async (response: Response) => {
     window.location.href = '/login';
     throw new Error('Session expired. Please login again.');
   }
+  if (response.status === 404) {
+    const cachedUserStr = localStorage.getItem('tf_user');
+    if (cachedUserStr) {
+      try {
+        const cachedUser = JSON.parse(cachedUserStr);
+        if (cachedUser && cachedUser.id && response.url.includes(`/employees/${cachedUser.id}`)) {
+          console.warn('[Session Sync]: Logged-in user not found in database. Wiping session...');
+          localStorage.removeItem('tf_token');
+          localStorage.removeItem('tf_user');
+          window.location.href = '/login';
+          throw new Error('Your user profile no longer exists. Please contact the administrator.');
+        }
+      } catch (e) {
+        // Suppress parsing errors
+      }
+    }
+  }
   return response;
 };
 
@@ -246,6 +263,15 @@ export const processPayroll = async () => {
     headers: getAuthHeaders()
   });
   if (!response.ok) throw new Error('Failed to process payroll');
+  return response.json();
+};
+
+export const generatePayslip = async (employeeId: string) => {
+  const response = await fetch(`${BASE_URL}/payroll/generate/${employeeId}`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  if (!response.ok) throw new Error('Failed to generate payslip');
   return response.json();
 };
 

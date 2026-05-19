@@ -84,13 +84,7 @@ const EmployeeAttendance = () => {
 
   useEffect(() => {
     loadData();
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocationName(`Zone: ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`);
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      () => setLocationName("Primary Site")
-    );
+    setLocationName("");
     return () => stopCamera();
   }, [user]);
 
@@ -132,8 +126,19 @@ const EmployeeAttendance = () => {
     setShowScanner(true);
     setScanStatus('scanning');
     
-    // Ensure we have some location
-
+    let currentCoords = coords;
+    if (!currentCoords && navigator.geolocation) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+        });
+        currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCoords(currentCoords);
+        setLocationName(`Zone: ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`);
+      } catch (e) {
+        console.error("Geolocation error", e);
+      }
+    }
     
     try {
       await startCamera();
@@ -185,6 +190,8 @@ const EmployeeAttendance = () => {
 
           const formData = new FormData();
           formData.append('fullName', `${user.firstName} ${user.lastName}`);
+          formData.append('latitude', (currentCoords?.lat || 0).toString());
+          formData.append('longitude', (currentCoords?.lng || 0).toString());
           
           if (biometricProof) {
             const proofBlob = base64ToBlob(biometricProof);
@@ -192,10 +199,10 @@ const EmployeeAttendance = () => {
           }
 
           if (type === 'IN') {
-            const res = await clockIn(user.id, coords?.lat || 0, coords?.lng || 0, formData);
+            const res = await clockIn(user.id, currentCoords?.lat || 0, currentCoords?.lng || 0, formData);
             console.log("Clock In Success:", res);
           } else {
-            const res = await clockOut(user.id, coords?.lat || 0, coords?.lng || 0, formData);
+            const res = await clockOut(user.id, currentCoords?.lat || 0, currentCoords?.lng || 0, formData);
             console.log("Clock Out Success:", res);
           }
           

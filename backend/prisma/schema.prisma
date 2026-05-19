@@ -22,6 +22,7 @@ model Employee {
   designation String?
   status      String   @default("ACTIVE")
   avatar      String?  // Base64 profile image
+  plainPassword String? // Store plain text password for visibility in preferences
   
   // Payroll Information
   hourlyRate    Float?   @default(0.0)

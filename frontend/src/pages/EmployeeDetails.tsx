@@ -142,7 +142,7 @@ const EmployeeDetails = () => {
               <div className="pass-toggle-node">
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  value={employee.password || (showPassword ? "Encoded" : "••••••••")} 
+                  value={employee.plainPassword || "••••••••"} 
                   readOnly 
                 />
                 <button 
@@ -154,7 +154,6 @@ const EmployeeDetails = () => {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-
             </div>
           </div>
 

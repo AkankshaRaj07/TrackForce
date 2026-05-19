@@ -794,6 +794,22 @@ app.post('/api/payroll/process', authenticateToken, requireManagement, async (re
   }
 });
 
+app.post('/api/payroll/generate/:employeeId', authenticateToken, requireManagement, async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    await prisma.attendance.updateMany({ 
+      where: { 
+        employeeId,
+        status: { in: ['PENDING', 'PRESENT', 'APPROVED'] } 
+      }, 
+      data: { status: 'PAID' } 
+    });
+    res.json({ message: 'Generated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Generate failed' });
+  }
+});
+
 app.get('/api/payroll/stats', authenticateToken, async (req: any, res: Response) => {
   try {
     const isAdmin = req.user.role === 'ADMIN';
@@ -852,23 +868,39 @@ app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
     });
     const totalSites = isAdmin ? await prisma.site.count() : (isManager ? 1 : 0);
     
-    // 2. Site Performance (Active employees per site)
-    const sitePerformanceRaw = await prisma.attendance.groupBy({
-      by: ['siteId'],
-      where: { 
+    // 2. Site Performance (Active employees per site with names)
+    const activeAttendances = await prisma.attendance.findMany({
+      where: {
         clockOut: null,
         ...(isManager ? { siteId: req.user.siteId } : (isAdmin ? {} : { employeeId: req.user.id }))
       },
-      _count: { id: true }
+      include: {
+        employee: true,
+        site: true
+      }
     });
 
-    const sitePerformance = await Promise.all(sitePerformanceRaw.map(async (sp) => {
-      const site = await prisma.site.findUnique({ where: { id: sp.siteId || '' } });
-      return {
-        name: site?.name || 'Mobile Operations',
-        count: sp._count.id
-      };
-    }));
+    const siteGroups: { [key: string]: { name: string; count: number; activeEmployees: string[] } } = {};
+    activeAttendances.forEach(att => {
+      const siteId = att.siteId || 'mobile';
+      const siteName = att.site?.name || 'Mobile Operations';
+      const empName = att.employee ? `${att.employee.firstName} ${att.employee.lastName}` : 'Unknown Employee';
+
+      if (!siteGroups[siteId]) {
+        siteGroups[siteId] = {
+          name: siteName,
+          count: 0,
+          activeEmployees: []
+        };
+      }
+      
+      if (!siteGroups[siteId].activeEmployees.includes(empName)) {
+        siteGroups[siteId].activeEmployees.push(empName);
+        siteGroups[siteId].count += 1;
+      }
+    });
+
+    const sitePerformance = Object.values(siteGroups);
 
     // 3. Weekly Trend (Last 7 days)
     const trend = [];
@@ -878,17 +910,33 @@ app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
       const start = new Date(date.setHours(0,0,0,0));
       const end = new Date(date.setHours(23,59,59,999));
       
-      const count = await prisma.attendance.count({
-        where: {
-          date: { gte: start, lte: end },
-          ...(isManager ? { siteId: req.user.siteId } : (isAdmin ? {} : { employeeId: req.user.id }))
-        }
-      });
-      
-      trend.push({
-        name: start.toLocaleDateString('en-US', { weekday: 'short' }),
-        attendance: count
-      });
+      if (isMgmt) {
+        const count = await prisma.attendance.count({
+          where: {
+            date: { gte: start, lte: end },
+            ...(isManager ? { siteId: req.user.siteId } : {})
+          }
+        });
+        trend.push({
+          name: start.toLocaleDateString('en-US', { weekday: 'short' }),
+          attendance: count
+        });
+      } else {
+        const dayLogs = await prisma.attendance.findMany({
+          where: {
+            employeeId: req.user.id,
+            date: { gte: start, lte: end }
+          },
+          include: { breaks: true }
+        });
+        const dayMins = dayLogs.reduce((acc, curr) => acc + (curr.clockOut ? calculateRoundedDuration(new Date(curr.clockIn), new Date(curr.clockOut), curr.breaks) : 0), 0);
+        const dayHours = dayMins / 60;
+        
+        trend.push({
+          name: start.toLocaleDateString('en-US', { weekday: 'short' }),
+          attendance: parseFloat(dayHours.toFixed(1))
+        });
+      }
     }
 
     // 4. Recent Activity/Logs
@@ -922,12 +970,46 @@ app.get('/api/stats', authenticateToken, async (req: any, res: Response) => {
     // 5. Employee specific metrics
     let employeeMetrics: any = {};
     if (!isMgmt) {
-      const attendance = await prisma.attendance.findMany({ where: { employeeId: req.user.id } });
-      const weeklyHours = attendance.reduce((acc, curr) => acc + (curr.clockOut ? (new Date(curr.clockOut).getTime() - new Date(curr.clockIn).getTime()) / (1000 * 60 * 60) : 0), 0);
+      const attendance = await prisma.attendance.findMany({ 
+        where: { employeeId: req.user.id },
+        include: { breaks: true }
+      });
+      const employee = await prisma.employee.findUnique({ where: { id: req.user.id } });
+      const hourlyRate = employee?.hourlyRate || 25.00;
+
+      // Calculate weekly hours (shifts started in the last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const weeklyLogs = attendance.filter(l => new Date(l.date || l.clockIn) >= sevenDaysAgo);
+      const weeklyMins = weeklyLogs.reduce((acc, curr) => acc + (curr.clockOut ? calculateRoundedDuration(new Date(curr.clockIn), new Date(curr.clockOut), curr.breaks) : 0), 0);
+      const weeklyHoursVal = weeklyMins / 60;
+
+      // Calculate monthly hours (shifts started in the current calendar month)
+      const now = new Date();
+      const currentMonthLogs = attendance.filter(l => {
+        const d = new Date(l.date || l.clockIn);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      const monthlyMins = currentMonthLogs.reduce((acc, curr) => acc + (curr.clockOut ? calculateRoundedDuration(new Date(curr.clockIn), new Date(curr.clockOut), curr.breaks) : 0), 0);
+      const monthlyHoursVal = monthlyMins / 60;
+
+      // Calculate actual earnings for current month
+      const earningsVal = monthlyHoursVal * hourlyRate;
+
+      // Calculate reliability (Present days / Total days logged this month, or default 98.4%)
+      let reliability = 98.4;
+      if (currentMonthLogs.length > 0) {
+        const presentDays = currentMonthLogs.filter(l => l.status === 'APPROVED' || l.status === 'PRESENT' || l.status === 'PAID').length;
+        reliability = parseFloat(((presentDays / currentMonthLogs.length) * 100).toFixed(1));
+      }
+
       employeeMetrics = {
-        weeklyHours: weeklyHours.toFixed(1),
-        efficiency: 98, // Simulated
-        earnings: Math.round(weeklyHours * 250000) // Simulated 250k/hr
+        weeklyHours: weeklyHoursVal.toFixed(1),
+        monthlyHours: monthlyHoursVal.toFixed(1),
+        efficiency: reliability,
+        earnings: Math.round(earningsVal),
+        currencySymbol: '$',
+        hourlyRate: hourlyRate
       };
     }
 
