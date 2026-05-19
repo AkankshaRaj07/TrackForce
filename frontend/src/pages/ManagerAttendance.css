@@ -1,6 +1,31 @@
 .manager-att-page {
+  height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 0 !important;
   animation: fadeIn 0.4s ease-out;
 }
+
+.manager-att-page .main-header-row {
+  margin: 0;
+  padding: 0;
+}
+
+.manager-att-page .title-section h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.manager-att-page .title-section p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -11,8 +36,8 @@
   display: grid;
   grid-template-columns: 350px 1fr 350px;
   gap: 24px;
-  height: calc(100vh - 220px);
-  min-height: 500px;
+  flex: 1;
+  min-height: 0;
 }
 
 .site-select-premium-static {
@@ -32,9 +57,9 @@
 .personal-status-card {
   display: flex;
   flex-direction: column;
-  padding: 32px;
+  padding: 24px 20px;
   align-items: center;
-  gap: 32px;
+  gap: 20px;
   background: var(--highlight);
 }
 
@@ -44,9 +69,9 @@
 
 .avatar-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 20px;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 12px;
 }
 
 .large-avatar {
@@ -74,15 +99,15 @@
 }
 
 .profile-card-mini h3 {
-  margin: 16px 0 4px;
-  font-size: 22px;
+  margin: 12px 0 4px;
+  font-size: 20px;
   color: var(--text-primary);
 }
 
 .role-text {
   color: var(--text-tertiary);
-  font-size: 14px;
-  margin-bottom: 20px;
+  font-size: 13px;
+  margin-bottom: 12px;
 }
 
 .biometric-verified-badge {
@@ -301,14 +326,14 @@
 }
 
 .pulse-icon {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   background: var(--primary-glow);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
+  margin: 0 auto 16px;
   color: var(--primary);
   animation: pulse 2s infinite;
 }
@@ -324,14 +349,14 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 32px;
+  padding: 20px;
 }
 
 .selected-header {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 .selected-header h3 {
@@ -344,7 +369,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   justify-content: center;
 }
 
@@ -399,7 +424,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .btn-log-action {
@@ -462,7 +487,7 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .manager-att-grid {
     grid-template-columns: 1fr;
     height: auto;

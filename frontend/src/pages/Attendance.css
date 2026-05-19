@@ -1092,6 +1092,7 @@
 .verification-placeholder p {
   color: var(--text-dim);
   max-width: 300px;
+}
 /* Biometric Proof Styles */
 .proof-stack-mini {
   display: flex;
@@ -1361,10 +1362,7 @@
     display: none; /* Hide duration and site on mobile to keep focus on status/proof */
   }
 }
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-dim);
-}
+
 
 .personal-actions-sidebar {
   padding: 24px 0;
@@ -2275,4 +2273,132 @@
     min-width: 180px;
   }
 }
+
+/* Mock Biometric Scan Vector & Styling */
+.mock-biometric-vector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  background: radial-gradient(circle at center, rgba(254, 215, 0, 0.03), rgba(0, 0, 0, 0.4));
+  border-radius: 12px;
+  min-height: 320px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(254, 215, 0, 0.05);
+}
+
+.bio-scan-svg {
+  width: 160px;
+  height: 160px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 8px var(--primary-glow));
+}
+
+.mock-biometric-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+.mock-biometric-label .token-text {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+.mock-biometric-label .badge-verified {
+  font-size: 9px;
+  font-weight: 900;
+  color: var(--primary);
+  background: rgba(254, 215, 0, 0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.15em;
+  border: 1px solid rgba(254, 215, 0, 0.2);
+}
+
+/* Biometric scanning keyframe animations */
+@keyframes spin-circle {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes laser-sweep {
+  0% { y1: 20px; y2: 20px; opacity: 0.3; }
+  50% { y1: 80px; y2: 80px; opacity: 1; }
+  100% { y1: 20px; y2: 20px; opacity: 0.3; }
+}
+
+.spinning-circle {
+  transform-origin: 50px 50px;
+  animation: spin-circle 15s linear infinite;
+}
+
+.laser-line {
+  animation: laser-sweep 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 2px var(--primary));
+}
+
+@media (max-width: 1024px) {
+  .enterprise-page {
+    padding: 0 20px 20px;
+  }
+  .attendance-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .enterprise-page {
+    padding: 16px 12px;
+  }
+  .main-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .date-picker-button {
+    width: 100%;
+  }
+  .breakdown-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    padding: 20px;
+  }
+  .breakdown-stats {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .toggle-group {
+    width: 100%;
+  }
+  .toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .btn-row {
+    width: 100%;
+  }
+  .btn-row button, .btn-outline {
+    flex: 1;
+    justify-content: center;
+  }
+  .hours-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 

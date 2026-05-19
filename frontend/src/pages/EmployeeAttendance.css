@@ -1,6 +1,6 @@
 .employee-att-container {
   width: 100%;
-  padding: 24px;
+  padding: 0 24px 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -31,10 +31,11 @@
 
 .hero-stats-overlay { display: flex; gap: 16px; }
 .h-stat { background: rgba(255, 255, 255, 0.05); padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); }
-.h-val { font-size: 20px; font-weight: 800; display: block; }
+.h-val { font-size: 20px; font-weight: 800; display: block; white-space: nowrap; }
 .h-lab { font-size: 10px; font-weight: 700; color: #93c5fd; text-transform: uppercase; }
 
 .live-clock-card-premium { text-align: right; background: rgba(0, 0, 0, 0.1); padding: 24px 32px; border-radius: 24px; backdrop-filter: blur(10px); }
+.clock-wrapper { display: flex; align-items: baseline; justify-content: flex-end; white-space: nowrap; }
 .live-time { font-size: 48px; font-weight: 800; }
 .live-seconds { font-size: 20px; color: #60a5fa; margin-left: 4px; }
 .live-date { display: block; font-size: 12px; font-weight: 800; color: #bfdbfe; margin-top: 8px; }
@@ -49,9 +50,8 @@
 .action-card-premium, .compact-id-hero {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 28px;
-  padding: 20px;
-  min-height: 220px;
+  border-radius: 24px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-card);
@@ -64,11 +64,11 @@
 .status-pill.online { color: var(--success); border-color: var(--success); }
 .status-pill .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
-.action-buttons-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; }
+.action-buttons-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 
 .big-btn {
-  height: 80px;
-  border-radius: 16px;
+  height: 64px;
+  border-radius: 14px;
   border: none;
   display: flex;
   flex-direction: column;
@@ -88,23 +88,23 @@
 .footer-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
 
 /* Identity Card */
-.compact-id-hero { align-items: center; text-align: center; }
-.profile-main-stack { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.compact-id-hero { align-items: stretch; text-align: left; justify-content: space-between; }
+.profile-main-stack { display: flex; flex-direction: row; align-items: center; gap: 16px; width: 100%; }
 
-.avatar-frame { position: relative; width: 80px; height: 80px; }
+.avatar-frame { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
 .avatar-frame img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--surface-hover); }
 .avatar-ring { position: absolute; inset: -4px; border: 2px solid var(--primary); border-radius: 50%; opacity: 0.2; }
 
-.name-stack { display: flex; flex-direction: column; gap: 0px; align-items: center; }
-.p-name { font-size: 20px; font-weight: 900; color: var(--text-primary); }
-.p-role { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.name-stack { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.p-name { font-size: 18px; font-weight: 900; color: var(--text-primary); }
+.p-role { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-.secured-badge { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary); background: var(--primary-glow); padding: 4px 12px; border-radius: 100px; margin-top: 8px; }
+.secured-badge { display: flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 800; color: var(--primary); background: var(--primary-glow); padding: 4px 10px; border-radius: 100px; margin-top: 4px; }
 
-.id-metadata-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
-.meta-item { display: flex; flex-direction: column; gap: 4px; }
-.m-label { font-size: 10px; font-weight: 800; color: var(--text-tertiary); }
-.m-value { font-size: 15px; font-weight: 800; color: var(--text-primary); }
+.id-metadata-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.meta-item { display: flex; flex-direction: column; gap: 2px; }
+.m-label { font-size: 9px; font-weight: 800; color: var(--text-tertiary); }
+.m-value { font-size: 14px; font-weight: 800; color: var(--text-primary); }
 
 /* Bottom Section */
 .bottom-layout-grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; }
@@ -135,14 +135,18 @@
 .cal-day-header { text-align: center; font-size: 10px; font-weight: 800; color: var(--text-tertiary); padding-bottom: 12px; }
 
 .cal-dot-box { aspect-ratio: 1.4; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
-.cal-dot-box.approved { background: var(--success); border: none; color: white; }
-.cal-dot-box.pending { background: #f59e0b; border: none; color: white; }
-.cal-dot-box.absent { background: #ef4444; border: none; color: white; opacity: 0.8; }
+
+.cal-dot-box.approved { background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.35); }
+.cal-dot-box.pending { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.35); }
+.cal-dot-box.absent { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.35); }
+
 .cal-dot-box.today { border: 2px solid var(--primary); }
 
-.dot-date { font-size: 13px; font-weight: 800; position: absolute; top: 6px; left: 8px; color: var(--text-secondary); }
-.cal-dot-box.approved .dot-date, .cal-dot-box.pending .dot-date, .cal-dot-box.absent .dot-date { color: white; }
-.dot-hours { font-size: 10px; font-weight: 800; margin-top: 12px; }
+
+
+.dot-date { font-size: 13px; font-weight: 800; position: absolute; top: 8px; left: 10px; color: var(--text-secondary); }
+
+.dot-hours { font-size: 10px; font-weight: 800; position: absolute; bottom: 8px; right: 10px; color: var(--text-tertiary); }
 
 /* Scanner */
 .scanner-overlay { position: fixed; inset: 0; background: var(--glass-rich); backdrop-filter: var(--glass-blur); z-index: 9999; display: flex; align-items: center; justify-content: center; }

@@ -733,6 +733,11 @@
     font-size: 2.8rem;
   }
 
+  .creative-overview-deck {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
   .deck-row-sub {
     grid-template-columns: 1fr;
     gap: 2rem;

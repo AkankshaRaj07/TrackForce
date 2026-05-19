@@ -1,14 +1,60 @@
-.payroll-container {
+.payroll-page {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+  margin-top: -10px;
+}
+
+.page-header-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0;
+  padding-top: 0;
+  margin-bottom: -10px;
+  gap: 20px;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.header-text p {
+  margin: 0;
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .page-header-premium {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+.payroll-page h1 {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .stats-grid-premium {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 0px;
 }
 
 .stat-card-premium {
@@ -155,7 +201,7 @@
 }
 
 @media (max-width: 768px) {
-  .payroll-container {
+  .payroll-page {
     padding: 12px;
   }
 
@@ -204,10 +250,11 @@
 
   .action-row-mini {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
   }
 
-  .icon-btn {
+  .icon-btn, .action-row-mini .btn {
+    width: 100%;
     flex: 1;
     justify-content: center;
   }
@@ -277,10 +324,6 @@
 }
 
 @media (max-width: 480px) {
-  .stats-grid-premium {
-    grid-template-columns: 1fr;
-  }
-
   .stat-value {
     font-size: 20px;
   }
@@ -292,8 +335,7 @@
 }
 
 .table-controls {
-  padding: 16px 24px;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -336,9 +378,34 @@
   color: var(--primary);
 }
 
+.month-picker-input {
+  background: var(--surface-bright);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-premium);
+}
+
+.month-picker-input:hover {
+  border-color: var(--text-dim);
+}
+
+.month-picker-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-glow);
+}
+
 .action-row-mini {
   display: flex;
   gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .icon-btn {
@@ -406,8 +473,72 @@
 }
 
 /* Ensure table cells align correctly */
+.enterprise-table th,
 .enterprise-table td {
   vertical-align: middle;
+  padding: 16px 24px;
+}
+
+.enterprise-table tbody tr {
+  transition: all 0.2s var(--ease-premium);
+}
+
+.enterprise-table tbody tr:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Premium action buttons in the payroll registry */
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s var(--ease-premium);
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid #10b981;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-generate:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.btn-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-view-slip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s var(--ease-premium);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  border: 1px solid var(--primary);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-view-slip:hover {
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px var(--primary-glow);
 }
 
 /* Dashboard Premium Styles */

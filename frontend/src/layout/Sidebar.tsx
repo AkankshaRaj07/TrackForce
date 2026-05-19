@@ -13,9 +13,11 @@ import {
   User
 } from 'lucide-react';
 
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { fetchStats, fetchAllLogs } from '../api/api';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -30,6 +32,66 @@ const Sidebar = ({ onClose, collapsed, onToggleCollapse }: SidebarProps) => {
 
   const { t } = useTranslation();
   const isManager = user?.role === 'MANAGER' || isAdmin;
+
+  const [pulseData, setPulseData] = useState<{ present: number; absent: number; percent: number }>({
+    present: 24,
+    absent: 2,
+    percent: 92
+  });
+
+  useEffect(() => {
+    if (collapsed) return;
+
+    const loadPulseData = async () => {
+      try {
+        if (user?.role === 'EMPLOYEE') {
+          // Regular Employee: Calculate monthly metrics (number of days present & absent this month)
+          const logs = await fetchAllLogs();
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = now.getMonth();
+          const today = now.getDate();
+          
+          let present = 0;
+          let absent = 0;
+          
+          for (let d = 1; d <= today; d++) {
+            const dateObj = new Date(year, month, d);
+            const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+            const dayLogs = logs.filter((l: any) => l.date && l.date.split('T')[0] === dateStr);
+            
+            if (dayLogs.length > 0) {
+              present++;
+            } else {
+              // Exclude weekends from absence metrics to ensure fairness
+              if (dateObj.getDay() !== 0 && dateObj.getDay() !== 6) {
+                absent++;
+              }
+            }
+          }
+          
+          const total = present + absent;
+          const percent = total > 0 ? Math.round((present / total) * 100) : 100;
+          
+          setPulseData({ present, absent, percent });
+        } else {
+          // Admin or Manager: System/Site wide active snapshot of checked-in workers for today
+          const stats = await fetchStats();
+          const present = stats.activeNow || 0;
+          const total = stats.totalEmployees || 1;
+          const absent = Math.max(0, total - present);
+          const percent = Math.min(100, Math.round((present / total) * 100));
+          setPulseData({ present, absent, percent });
+        }
+      } catch (err) {
+        console.error('Failed to sync sidebar daily pulse metrics:', err);
+      }
+    };
+
+    loadPulseData();
+    const interval = setInterval(loadPulseData, 30000); // Sync every 30s
+    return () => clearInterval(interval);
+  }, [collapsed, user]);
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: t('dashboard'), path: '/dashboard' },
@@ -85,21 +147,21 @@ const Sidebar = ({ onClose, collapsed, onToggleCollapse }: SidebarProps) => {
           <>
             <div className="pulse-card">
               <div className="pulse-header">
-                <span className="pulse-label">Daily Pulse</span>
+                <span className="pulse-label">{user?.role === 'EMPLOYEE' ? 'Monthly Pulse' : 'Daily Pulse'}</span>
                 <div className="pulse-dot"></div>
               </div>
               <div className="pulse-stats">
                 <div className="pulse-stat">
-                  <span className="pulse-value">24</span>
+                  <span className="pulse-value">{pulseData.present}</span>
                   <span className="pulse-desc">Present</span>
                 </div>
                 <div className="pulse-stat">
-                  <span className="pulse-value accent">2</span>
+                  <span className="pulse-value accent">{pulseData.absent}</span>
                   <span className="pulse-desc">Absent</span>
                 </div>
               </div>
               <div className="pulse-progress-bg">
-                <div className="pulse-progress-fill" style={{ width: '92%' }}></div>
+                <div className="pulse-progress-fill" style={{ width: `${pulseData.percent}%` }}></div>
               </div>
             </div>
 
