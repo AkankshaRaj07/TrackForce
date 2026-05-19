@@ -255,3 +255,38 @@ h4 {
     display: none;
   }
 }
+
+/* Premium Back Button Style Utility */
+.back-btn,
+.back-btn-compact,
+.btn-back {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: var(--surface-hover) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer !important;
+  transition: all 0.25s var(--ease-premium) !important;
+  outline: none !important;
+  padding: 0 !important;
+}
+
+.back-btn:hover,
+.back-btn-compact:hover,
+.btn-back:hover {
+  background: var(--primary-glow) !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  transform: scale(1.05) translateX(-2px) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.back-btn:active,
+.back-btn-compact:active,
+.btn-back:active {
+  transform: scale(0.95) translateX(-2px) !important;
+}

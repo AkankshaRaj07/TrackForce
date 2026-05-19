@@ -27,7 +27,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at 70% 30%, rgba(46, 163, 131, 0.08) 0%, transparent 60%);
+  background: radial-gradient(circle at 70% 30%, var(--primary-glow) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -228,7 +228,7 @@
 
 .glass-tile-premium:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(46, 163, 131, 0.4);
+  border-color: var(--primary);
   transform: translateY(-8px);
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
 }
@@ -398,12 +398,12 @@
   width: 64px;
   height: 64px;
   border-radius: 20px;
-  background: rgba(46, 163, 131, 0.1);
+  background: var(--primary-glow);
   color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(46, 163, 131, 0.2);
+  border: 1px solid var(--primary-border);
 }
 
 .intel-content h3 {

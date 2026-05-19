@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
-  Briefcase, 
   Camera, 
   Lock, 
   ChevronLeft,
@@ -14,8 +13,6 @@ import {
   EyeOff,
   TrendingUp,
   Upload, 
-
-  FileText,
   CreditCard
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -181,400 +178,349 @@ const AddEmployee = () => {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="add-employee-page-v2"
+      className="add-employee-page-v3"
     >
-      <header className="page-header">
-        <div className="header-left">
-          <div>
-            <h1>{isEditMode ? "Edit Employee Profile" : "Add New Workforce Member"}</h1>
-            <p>{isEditMode ? "Modify existing workforce data and biometric access levels." : "Set up a new workforce member with biometric access."}</p>
+      <form onSubmit={handleSubmit}>
+        <header className="page-header-v3">
+          <div className="header-left">
+            <button type="button" className="btn-icon-ghost back-btn-compact" onClick={() => navigate('/employees')}>
+              <ChevronLeft size={20} />
+            </button>
+            <div>
+              <h1>{isEditMode ? "Edit Profile" : "Add Workforce Member"}</h1>
+              <p>{isEditMode ? "Update workforce details and permissions." : "Create a new profile with biometric and payroll details."}</p>
+            </div>
           </div>
-          <button className="btn-icon-ghost back-btn-compact" onClick={() => navigate('/employees')}>
-            <ChevronLeft size={20} />
-          </button>
-        </div>
-      </header>
+          <div className="header-actions">
+            <button type="button" onClick={() => navigate('/employees')} className="btn btn-ghost">
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? "Processing..." : (isEditMode ? "Save Changes" : "Create Profile")}
+              {isEditMode ? <Save size={16} /> : <UserPlus size={16} />}
+            </button>
+          </div>
+        </header>
 
-      <form onSubmit={handleSubmit} className="add-employee-grid">
         {error && (
-          <div className="error-banner full-width-banner">
+          <div className="error-banner">
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="form-column">
-          {/* Core Identity Card */}
-          <div className="glass-card form-section-card">
-            <div className="section-header">
-              <User size={20} />
-              <h3>Core Identity</h3>
-            </div>
-            
-            <div className="profile-top-site" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Full Name <span className="required-star">*</span></label>
-                <input 
-                  type="text" 
-                  required 
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value.replace(/[0-9]/g, '')})}
-                  placeholder="e.g. John Doe" 
-                />
-              </div>
-
-              <div className="avatar-upload-compact">
-                <div className="avatar-preview-md">
-                  {formData.avatar ? (
-                    <img src={formData.avatar} alt="Preview" />
-                  ) : (
-                    <User size={32} />
-                  )}
-                  <label htmlFor="avatar-page-upload" className="upload-badge-md">
-                    <Camera size={16} />
-                  </label>
-                </div>
-                <input 
-                  id="avatar-page-upload"
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, 'avatar')}
-                  style={{ display: 'none' }}
-                />
-                <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '4px', textAlign: 'center', opacity: 0.8 }}>Avatar <span className="required-star">*</span></p>
-              </div>
-            </div>
-          </div>
-
-          {/* Security & Authentication Card */}
-          <div className="glass-card form-section-card">
-            <div className="section-header">
-              <Lock size={20} />
-              <h3>Security & Authentication</h3>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Employee ID (Login ID) <span className="required-star">*</span></label>
-                <input 
-                  type="text" 
-                  required 
-                  value={formData.employeeId}
-                  onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                  placeholder="e.g. TF001" 
-                />
-              </div>
-              <div className="form-group">
-                <label>{isEditMode ? "New Password" : "Initial Password"} <span className="required-star">*</span></label>
-                <div className="password-input-wrapper" style={{ position: 'relative', maxWidth: '220px' }}>
+        <div className="add-employee-layout-split">
+          {/* Core & Security Card */}
+          <div className="compact-section card-1">
+              <h3 className="section-title-compact">1. Core Identity & Access</h3>
+              <div className="core-security-header-row">
+                <div className="avatar-field-compact">
+                  <div className="avatar-preview-wrapper-compact">
+                    {formData.avatar ? (
+                      <img src={formData.avatar} alt="Preview" className="avatar-img-modern" />
+                    ) : (
+                      <div className="avatar-placeholder-modern">
+                        <User size={24} />
+                      </div>
+                    )}
+                    <label htmlFor="avatar-page-upload" className="avatar-upload-trigger">
+                      <Camera size={12} />
+                    </label>
+                  </div>
                   <input 
-                    type={showPassword ? "text" : "password"} 
-                    required={!isEditMode}
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    placeholder="••••••••" 
+                    id="avatar-page-upload"
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'avatar')}
+                    style={{ display: 'none' }}
                   />
-                  <button
-                    type="button"
-                    className="password-toggle-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--primary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      opacity: 0.9,
-                      transition: 'opacity 0.3s ease'
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                </div>
+                
+                <div className="fields-grid">
+                  <div className="form-field required">
+                    <label>Full Name</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({...formData, fullName: e.target.value.replace(/[0-9]/g, '')})}
+                      placeholder="e.g. John Doe" 
+                    />
+                  </div>
+                  <div className="form-field required">
+                    <label>Employee ID</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={formData.employeeId}
+                      onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
+                      placeholder="e.g. TF001" 
+                    />
+                  </div>
+                  <div className="form-field required">
+                    <label>{isEditMode ? "New Password" : "Initial Password"}</label>
+                    <div className="password-input-wrapper-modern">
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        required={!isEditMode}
+                        value={formData.password}
+                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        placeholder="••••••••" 
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-btn-modern"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Contact Details Card */}
-          <div className="glass-card form-section-card">
-            <div className="section-header">
-              <Smartphone size={20} />
-              <h3>Contact Details</h3>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Date of Birth</label>
-                <input 
-                  type="date" 
-                  value={formData.dob}
-                  onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Phone Number <span className="required-star">*</span></label>
-                <input 
-                  type="tel" 
-                  required 
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  placeholder="+1 (555) 000-0000" 
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+              <div className="form-row-grid grid-2" style={{ marginTop: '12px' }}>
+                <div className="form-field">
+                  <label>Date of Birth</label>
+                  <input 
+                    type="date" 
+                    value={formData.dob}
+                    onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                  />
+                </div>
 
-        <div className="form-column">
-          {/* Payroll Parameters Card */}
-          <div className="glass-card form-section-card">
-            <div className="section-header">
-              <CheckCircle2 size={20} />
-              <h3>Payroll & Project</h3>
-            </div>
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label>Salary (Per Hour) <span className="required-star">*</span></label>
-                <div className="input-with-label">
-                  <span className="currency-prefix">₫</span>
+                <div className="form-field required">
+                  <label>Phone Number</label>
                   <input 
-                    type="number" 
-                    step="1000"
-                    min="0"
-                    required
-                    value={formData.hourlyRate || ''}
-                    onChange={(e) => setFormData({...formData, hourlyRate: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
-                    placeholder="50,000" 
+                    type="tel" 
+                    required 
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    placeholder="+1 (555) 000-0000" 
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label>Overtime Protocol <span className="required-star">*</span></label>
-                <PremiumSelect 
-                  required
-                  value={formData.overtimeType}
-                  onChange={(val: string) => setFormData({...formData, overtimeType: val})}
-                  options={[
-                    { label: 'Multiplier (1x, 1.5x...)', value: 'MULTIPLIER' },
-                    { label: 'Fixed Amount (VNĐ)', value: 'FIXED' }
-                  ]}
-                />
-              </div>
-              <div className="form-group">
-                <label>{formData.overtimeType === 'MULTIPLIER' ? 'Multiplier Value' : 'Fixed Amount (₫)'} <span className="required-star">*</span></label>
-                <div className="input-with-label">
-                  <span className="currency-prefix">{formData.overtimeType === 'MULTIPLIER' ? <TrendingUp size={18} /> : '₫'}</span>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    required
-                    value={formData.overtimeValue || ''}
-                    onChange={(e) => setFormData({...formData, overtimeValue: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
-                    placeholder={formData.overtimeType === 'MULTIPLIER' ? '1.5' : '100,000'} 
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Project & Role */}
-            <div className="section-header" style={{ marginTop: '24px' }}>
-              <Briefcase size={20} />
-              <h3>Project & Access</h3>
-            </div>
-            <div className="form-grid-3">
-              {formData.role === 'EMPLOYEE' && (
-                <div className="form-group">
-                  <label>Designation <span className="required-star">*</span></label>
-                  <PremiumSelect 
-                    required
-                    value={formData.designation}
-                    onChange={(val: string) => setFormData({...formData, designation: val})}
-                    options={[
-                      { label: 'Select Designation...', value: '' },
-                      { label: 'Supervisor', value: 'Supervisor' },
-                      { label: 'Foreman', value: 'Foreman' },
-                      { label: 'Experience Worker', value: 'Experience Worker' },
-                      { label: 'Engineer', value: 'Engineer' },
-                      { label: 'Fresh Worker', value: 'Fresh Worker' },
-                      { label: 'Safety', value: 'Safety' },
-                      { label: 'Drawing', value: 'Drawing' },
-                      { label: 'QA/QC', value: 'QA/QC' },
-                      { label: 'QS', value: 'QS' },
-                      { label: 'Store keeper', value: 'Store keeper' },
-                      { label: 'Sr. Foreman', value: 'Sr. Foreman' }
-                    ]}
-                    placeholder="Select Designation..."
-                  />
+
+              {!isEditMode && (
+                <div className="enrollment-notice-compact" style={{ marginTop: '12px' }}>
+                  <CheckCircle2 size={14} />
+                  <span>Requires face scan during first login.</span>
                 </div>
               )}
-              <div className="form-group">
-                <label>Access Level <span className="required-star">*</span></label>
-                <PremiumSelect 
-                  required
-                  disabled={!isAdmin}
-                  value={formData.role}
-                  onChange={(val: string) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      role: val,
-                      ...(val !== 'EMPLOYEE' ? { designation: '' } : {})
-                    }));
-                  }}
-                  options={[
-                    { label: 'Standard Employee', value: 'EMPLOYEE' },
-                    { label: 'Manager', value: 'MANAGER' },
-                    { label: 'Administrator', value: 'ADMIN' }
-                  ]}
-                />
-              </div>
-              <div className="form-group">
-                <label>Project Site <span className="required-star">*</span></label>
-                <PremiumSelect 
-                  required
-                  value={formData.siteId}
-                  onChange={(val: string) => setFormData({...formData, siteId: val})}
-                  options={[
-                    { label: 'Select Project Site...', value: '' },
-                    ...sites.map(site => ({ label: site.name, value: site.id }))
-                  ]}
-                  placeholder="Select Project Site..."
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Bank & Documents Card */}
-          <div className="glass-card form-section-card">
-            <div className="section-header">
-              <CreditCard size={20} />
-              <h3>Bank Account Details</h3>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Bank Name</label>
-                <input 
-                  type="text" 
-                  value={formData.bankName}
-                  onChange={(e) => setFormData({...formData, bankName: e.target.value})}
-                  placeholder="e.g. Vietcombank" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Account Number</label>
-                <input 
-                  type="text" 
-                  value={formData.accountNumber}
-                  onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
-                  placeholder="0123456789" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Account Holder Name</label>
-                <input 
-                  type="text" 
-                  value={formData.accountHolderName}
-                  onChange={(e) => setFormData({...formData, accountHolderName: e.target.value})}
-                  placeholder="FULL NAME AS PER BANK" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Swift / Routing Code</label>
-                <input 
-                  type="text" 
-                  value={formData.swiftCode}
-                  onChange={(e) => setFormData({...formData, swiftCode: e.target.value})}
-                  placeholder="VCBKVNVX" 
-                />
-              </div>
             </div>
 
-            <div className="section-header" style={{ marginTop: '24px' }}>
-              <FileText size={20} />
-              <h3>Passport & Identity Documents</h3>
-            </div>
-            <div className="form-grid-3">
-              <div className="form-group">
-                <label>Passport Number</label>
-                <input 
-                  type="text" 
-                  value={formData.passportNumber}
-                  onChange={(e) => setFormData({...formData, passportNumber: e.target.value})}
-                  placeholder="e.g. A12345678" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Issue Date</label>
-                <input 
-                  type="date" 
-                  value={formData.passportIssue}
-                  onChange={(e) => setFormData({...formData, passportIssue: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Expiry Date</label>
-                <input 
-                  type="date" 
-                  value={formData.passportExpiry}
-                  onChange={(e) => setFormData({...formData, passportExpiry: e.target.value})}
-                />
-              </div>
-            </div>
+            {/* Payroll & Project Card */}
+            <div className="compact-section card-2">
+              <h3 className="section-title-compact">2. Payroll & Project Assignment</h3>
+              <div className="form-row-grid grid-3">
+                <div className="form-field required">
+                  <label>Salary (Per Hour)</label>
+                  <div className="input-with-prefix-modern">
+                    <span className="prefix-addon">₫</span>
+                    <input 
+                      type="number" 
+                      step="1000"
+                      min="0"
+                      required
+                      value={formData.hourlyRate || ''}
+                      onChange={(e) => setFormData({...formData, hourlyRate: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
+                      placeholder="50,000" 
+                    />
+                  </div>
+                </div>
 
-            <div className="section-header" style={{ marginTop: '24px' }}>
-              <FileText size={20} />
-              <h3>Employee Resumes & Files</h3>
-            </div>
-            <div className="file-upload-grid-compact" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              <div className="file-upload-node">
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Resume / Professional CV</label>
-
-                <div className="upload-box-premium">
-                  <Upload size={16} color="var(--primary)" />
-                  <span>
-                    {files.cv ? files.cv.name : (formData.cvPath ? 'CV Uploaded' : 'Upload CV')}
-                  </span>
-                  <input type="file" onChange={(e) => handleFileChange(e, 'cv')} />
+                <div className="form-field required" style={{ gridColumn: 'span 2' }}>
+                  <label>Overtime Protocol</label>
+                  <div className="overtime-protocol-group-modern">
+                    <PremiumSelect 
+                      required
+                      value={formData.overtimeType}
+                      onChange={(val: string) => setFormData({...formData, overtimeType: val})}
+                      options={[
+                        { label: 'Multiplier', value: 'MULTIPLIER' },
+                        { label: 'Fixed Amount', value: 'FIXED' }
+                      ]}
+                    />
+                    <div className="input-with-prefix-modern">
+                      <span className="prefix-addon">{formData.overtimeType === 'MULTIPLIER' ? <TrendingUp size={14} /> : '₫'}</span>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        min="0"
+                        required
+                        value={formData.overtimeValue || ''}
+                        onChange={(e) => setFormData({...formData, overtimeValue: Math.max(0, e.target.value ? parseFloat(e.target.value) : 0)})}
+                        placeholder={formData.overtimeType === 'MULTIPLIER' ? '1.5' : '100,000'} 
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="file-upload-node">
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>ID Proof / Passport Copy</label>
 
-                <div className="upload-box-premium">
-                  <Upload size={16} color="var(--primary)" />
-                  <span>
-                    {files.idDoc ? files.idDoc.name : (formData.idDocPath ? 'ID Uploaded' : 'Upload ID')}
-                  </span>
-                  <input type="file" onChange={(e) => handleFileChange(e, 'idDoc')} />
+              <div className={`form-row-grid ${formData.role === 'EMPLOYEE' ? 'grid-3' : (formData.role === 'MANAGER' ? 'grid-2' : '')}`} style={{ marginTop: '12px' }}>
+                <div className="form-field required">
+                  <label>Access Level</label>
+                  <PremiumSelect 
+                    required
+                    disabled={!isAdmin}
+                    value={formData.role}
+                    onChange={(val: string) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        role: val,
+                        ...(val !== 'EMPLOYEE' ? { designation: '' } : {}),
+                        ...(val === 'ADMIN' ? { siteId: '' } : {})
+                      }));
+                    }}
+                    options={[
+                      { label: 'Employee', value: 'EMPLOYEE' },
+                      { label: 'Manager', value: 'MANAGER' },
+                      { label: 'Admin', value: 'ADMIN' }
+                    ]}
+                  />
+                </div>
+
+                {formData.role !== 'ADMIN' && (
+                  <div className="form-field required">
+                    <label>Project Site</label>
+                    <PremiumSelect 
+                      required
+                      value={formData.siteId}
+                      onChange={(val: string) => setFormData({...formData, siteId: val})}
+                      options={[
+                        { label: 'Select Site...', value: '' },
+                        ...sites.map(site => ({ label: site.name, value: site.id }))
+                      ]}
+                    />
+                  </div>
+                )}
+
+                {formData.role === 'EMPLOYEE' && (
+                  <div className="form-field required">
+                    <label>Designation</label>
+                    <PremiumSelect 
+                      required
+                      value={formData.designation}
+                      onChange={(val: string) => setFormData({...formData, designation: val})}
+                      options={[
+                        { label: 'Select Designation...', value: '' },
+                        { label: 'Supervisor', value: 'Supervisor' },
+                        { label: 'Foreman', value: 'Foreman' },
+                        { label: 'Experience Worker', value: 'Experience Worker' },
+                        { label: 'Engineer', value: 'Engineer' },
+                        { label: 'Fresh Worker', value: 'Fresh Worker' },
+                        { label: 'Safety', value: 'Safety' },
+                        { label: 'Drawing', value: 'Drawing' },
+                        { label: 'QA/QC', value: 'QA/QC' },
+                        { label: 'QS', value: 'QS' },
+                        { label: 'Store keeper', value: 'Store keeper' },
+                        { label: 'Sr. Foreman', value: 'Sr. Foreman' }
+                      ]}
+                    />
+                  </div>
+                )}
+            </div>
+          </div>
+
+          {/* Financial Card */}
+          <div className="compact-section card-4">
+              <h3 className="section-title-compact">4. Bank Accounts</h3>
+              <div className="form-row-grid grid-2">
+                <div className="form-field">
+                  <label>Bank Name</label>
+                  <input 
+                    type="text" 
+                    value={formData.bankName}
+                    onChange={(e) => setFormData({...formData, bankName: e.target.value})}
+                    placeholder="e.g. Vietcombank" 
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Account Number</label>
+                  <input 
+                    type="text" 
+                    value={formData.accountNumber}
+                    onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
+                    placeholder="e.g. 0123456789" 
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: '12px' }}>
+                <div className="form-field">
+                  <label>Account Holder Name</label>
+                  <input 
+                    type="text" 
+                    value={formData.accountHolderName}
+                    onChange={(e) => setFormData({...formData, accountHolderName: e.target.value})}
+                    placeholder="e.g. JOHN DOE" 
+                  />
                 </div>
               </div>
             </div>
-          </div>
 
-          {!isEditMode && (
-            <div className="enrollment-notice-v2">
-              <CheckCircle2 size={24} />
-              <div>
-                <h4>Face ID Enrollment Ready</h4>
-                <p>The member will be required to scan their face during their first login to complete biometric enrollment.</p>
+            {/* Official Identification Card */}
+            <div className="compact-section card-3">
+              <h3 className="section-title-compact">3. Identification & Documents</h3>
+              <div className="form-row-grid grid-3">
+                <div className="form-field">
+                  <label>Passport / ID Number</label>
+                  <input 
+                    type="text" 
+                    value={formData.passportNumber}
+                    onChange={(e) => setFormData({...formData, passportNumber: e.target.value})}
+                    placeholder="e.g. A12345678" 
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Passport Issue</label>
+                  <input 
+                    type="date" 
+                    value={formData.passportIssue}
+                    onChange={(e) => setFormData({...formData, passportIssue: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Passport Expiry</label>
+                  <input 
+                    type="date" 
+                    value={formData.passportExpiry}
+                    onChange={(e) => setFormData({...formData, passportExpiry: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row-grid grid-2" style={{ marginTop: '12px' }}>
+                <div className="form-field">
+                  <label>Resume / CV</label>
+                  <div className={`file-upload-zone-modern ${files.cv || formData.cvPath ? 'uploaded' : ''}`}>
+                    <Upload size={16} className="upload-icon" />
+                    <div className="upload-text">
+                      <span className="file-name-display">
+                        {files.cv ? files.cv.name : (formData.cvPath ? 'Resume_CV_Uploaded.pdf' : 'Upload Resume')}
+                      </span>
+                    </div>
+                    <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleFileChange(e, 'cv')} />
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label>ID Proof Document</label>
+                  <div className={`file-upload-zone-modern ${files.idDoc || formData.idDocPath ? 'uploaded' : ''}`}>
+                    <Upload size={16} className="upload-icon" />
+                    <div className="upload-text">
+                      <span className="file-name-display">
+                        {files.idDoc ? files.idDoc.name : (formData.idDocPath ? 'ID_Proof_Uploaded.jpg' : 'Upload ID Proof')}
+                      </span>
+                    </div>
+                    <input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'idDoc')} />
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-
-          <div className="form-actions-sticky glass-card">
-            <button type="button" onClick={() => navigate('/employees')} className="btn btn-ghost">
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
-              {isSubmitting ? "Processing..." : (isEditMode ? "Save Changes" : "Create Profile")}
-              {isEditMode ? <Save size={18} style={{ marginLeft: '8px' }} /> : <UserPlus size={18} style={{ marginLeft: '8px' }} />}
-            </button>
-          </div>
         </div>
       </form>
     </motion.div>

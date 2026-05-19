@@ -13,7 +13,7 @@ import './Topbar.css';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
+const Topbar = ({ onMenuClick, hideMenuBtn = false }: { onMenuClick?: () => void; hideMenuBtn?: boolean }) => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showLangDropdown, setShowLangDropdown] = useState(false);
@@ -33,9 +33,11 @@ const Topbar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <button className="mobile-menu-btn" onClick={onMenuClick}>
-          <Menu size={24} />
-        </button>
+        {!hideMenuBtn && (
+          <button className="mobile-menu-btn" onClick={onMenuClick}>
+            <Menu size={24} />
+          </button>
+        )}
         
         <div className="topbar-spacer"></div>
 

@@ -164,13 +164,6 @@ const EmployeeDetails = () => {
             <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <MapPin size={16} /> {employee.site?.name || 'Unassigned Site'}
             </span>
-            <button 
-              className="btn btn-primary btn-sm" 
-              onClick={() => navigate(`/employees/complete/${employee.id}`)}
-              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-            >
-              Complete Profile
-            </button>
           </div>
         </div>
       </section>
@@ -228,7 +221,6 @@ const EmployeeDetails = () => {
                 </div>
                 <div className="tile-content-stack">
                   <InfoItem icon={<Smartphone size={16} />} label="Phone Number" value={employee.phone || 'Not provided'} />
-                  <InfoItem icon={<Mail size={16} />} label="Email Address" value={employee.email || 'Not provided'} />
                   <InfoItem icon={<Calendar size={16} />} label="Date of Birth" value={employee.dob ? new Date(employee.dob).toLocaleDateString() : 'Not provided'} />
                   <InfoItem icon={<Calendar size={16} />} label="Joining Date" value={new Date(employee.createdAt).toLocaleDateString()} />
                 </div>
@@ -279,7 +271,6 @@ const EmployeeDetails = () => {
                   <InfoItem icon={<Landmark size={14} />} label="Bank Name" value={employee.bankName || 'Not provided'} />
                   <InfoItem icon={<CreditCard size={14} />} label="Account No." value={employee.accountNumber || 'Not provided'} />
                   <InfoItem icon={<User size={14} />} label="Account Holder" value={employee.accountHolderName || 'Not provided'} />
-                  <InfoItem icon={<TrendingUp size={14} />} label="Swift/Routing" value={employee.swiftCode || 'Not provided'} />
                 </div>
               </div>
 

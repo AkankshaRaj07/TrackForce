@@ -40,23 +40,27 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 };
 
 // Simple Layout Wrapper
-const PlatformLayout = ({ children }: { children: React.ReactNode }) => {
+const PlatformLayout = ({ children, hideSidebar = false }: { children: React.ReactNode; hideSidebar?: boolean }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
 
   return (
-    <div className={`app-container ${collapsed ? 'sidebar-collapsed' : ''}`}>
-      <div className={`sidebar-wrapper ${sidebarOpen ? 'mobile-open' : ''} ${collapsed ? 'collapsed' : ''}`}>
-        <Sidebar 
-          collapsed={collapsed} 
-          onToggleCollapse={() => setCollapsed(!collapsed)} 
-          onClose={() => setSidebarOpen(false)} 
-        />
-      </div>
-      <div className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}></div>
+    <div className={`app-container ${collapsed ? 'sidebar-collapsed' : ''} ${hideSidebar ? 'no-sidebar' : ''}`}>
+      {!hideSidebar && (
+        <>
+          <div className={`sidebar-wrapper ${sidebarOpen ? 'mobile-open' : ''} ${collapsed ? 'collapsed' : ''}`}>
+            <Sidebar 
+              collapsed={collapsed} 
+              onToggleCollapse={() => setCollapsed(!collapsed)} 
+              onClose={() => setSidebarOpen(false)} 
+            />
+          </div>
+          <div className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}></div>
+        </>
+      )}
       
       <div className="main-view-wrapper">
-        <Topbar onMenuClick={() => setSidebarOpen(true)} />
+        <Topbar onMenuClick={!hideSidebar ? () => setSidebarOpen(true) : undefined} hideMenuBtn={hideSidebar} />
         <main className="main-stage">
           <div className="content-area">
             {children}

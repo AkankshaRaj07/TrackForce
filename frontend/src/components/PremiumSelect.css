@@ -64,27 +64,26 @@
   border-radius: 12px;
   box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.15));
   z-index: 1000;
-  max-height: 200px;
-  overflow-y: auto;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   animation: selectMenuFadeIn 0.25s var(--ease-premium, cubic-bezier(0.16, 1, 0.3, 1));
+  overflow: hidden;
 }
 
-.premium-select-menu::-webkit-scrollbar {
+.premium-select-options::-webkit-scrollbar {
   width: 6px;
 }
 
-.premium-select-menu::-webkit-scrollbar-track {
+.premium-select-options::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.premium-select-menu::-webkit-scrollbar-thumb {
+.premium-select-options::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 10px;
 }
 
-.premium-select-menu::-webkit-scrollbar-thumb:hover {
+.premium-select-options::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
 
